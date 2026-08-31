@@ -11,9 +11,11 @@ endif()
 
 add_compile_options(-Wall -Wextra -Wpedantic)
 
-# --- core library (grows over time; empty for now) -------------------------
-add_library(tcl_core INTERFACE)
-target_include_directories(tcl_core INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+# --- core library (grows over time) --------------------------------------
+add_library(tcl_core STATIC
+  src/scoring/score.cpp
+)
+target_include_directories(tcl_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
 # --- CLI -----------------------------------------------------------------
 add_executable(tcl src/cli/main.cpp)

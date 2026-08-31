@@ -48,7 +48,7 @@ ctest --test-dir build
 Early scaffold. See the roadmap below; each box is roughly one sitting.
 
 ### Warm-up — scoring engine
-- [ ] `Score` type + `step()` transition for best-of-3, no tiebreak
+- [x] `Score` type + `step()` transition for best-of-3, no tiebreak
 - [ ] tiebreaks, best-of-5, `MatchFormat` as data
 - [ ] per-format final-set rules (Wimbledon pre-2019 / 2019–21 / 2022+, US Open, AO)
 - [ ] BFS model checker + invariants (valid / monotonic / terminating / single winner)
