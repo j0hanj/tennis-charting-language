@@ -1,0 +1,25 @@
+Tennis Charting Language (tcl)
+Copyright (c) 2026 Johan Jijo
+Licensed under the MIT License (see LICENSE).
+
+------------------------------------------------------------------------
+Third-party data
+------------------------------------------------------------------------
+
+This project parses and analyzes shot-by-shot data from the
+Match Charting Project by Jeff Sackmann / Tennis Abstract:
+
+    https://github.com/JeffSackmann/tennis_MatchChartingProject
+
+That dataset is licensed under the Creative Commons
+Attribution-NonCommercial-ShareAlike 4.0 International License
+(CC BY-NC-SA 4.0): https://creativecommons.org/licenses/by-nc-sa/4.0/
+
+The dataset is NOT redistributed in this repository. It is fetched
+locally by scripts/fetch_mcp_data.sh into a git-ignored data/ directory.
+A small hand-verified excerpt used for automated tests lives under
+test/corpus/ and retains the CC BY-NC-SA 4.0 license with attribution.
+
+The notation reference in docs/notation.md is an independent description
+of the charting shorthand, derived from the public Tennis Abstract
+"Quick Start Guide" and the MatchChart instructions sheet.
