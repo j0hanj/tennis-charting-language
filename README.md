@@ -68,10 +68,8 @@ cmake --build build
 ctest --test-dir build
 ```
 
-## data / license
+## data
 
-match charting data is jeff sackmann / tennis abstract, CC BY-NC-SA 4.0. i don't
-copy it into the repo — `scripts/fetch_mcp_data.sh` pulls it into `data/`. the
-notation writeup in `docs/` is my own, from their quick start guide.
-
-my code is MIT.
+the match charting data isn't mine — it's jeff sackmann / tennis abstract
+(CC BY-NC-SA). i don't check it into the repo, `scripts/fetch_mcp_data.sh` pulls
+it into `data/`. the notation writeup in `docs/` is my own, from their guide.
