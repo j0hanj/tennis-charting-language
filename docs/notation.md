@@ -1,18 +1,16 @@
-# The Match Charting Project shorthand — notation reference
+# notes on the match charting notation
 
-This is an independent description of the charting shorthand used by the
-[Match Charting Project](https://github.com/JeffSackmann/tennis_MatchChartingProject),
-derived from the public Tennis Abstract "Quick Start Guide" and the MatchChart
-instructions sheet. It is the spec `tcl`'s lexer and parser implement.
+my writeup of how the match charting project shorthand works, from the tennis
+abstract quick start guide and the matchchart instructions sheet. this is what
+the lexer/parser are going to follow.
 
-> **Status:** draft. Codes below are confirmed; a formal EBNF grammar and the
-> full code tables (rare shots, net cords, serve-and-volley, unusual endings)
-> are still to be written. v1 targets singles with the core codes only.
+still a draft. the codes here are the ones i'm sure about. the rarer stuff (net
+cords, serve and volley, weird endings) and a proper grammar are still todo. for
+a first version i'm only doing singles and the common codes.
 
-## A point string, left to right
+## a point string, left to right
 
-A point is recorded as one string: the serve, then each shot of the rally in
-order, then how the point ended.
+a point is one string: the serve, then each shot in order, then how it ended.
 
 ```
 4 f f b b f *
@@ -20,10 +18,10 @@ order, then how the point ended.
 serve   rally    ending
 ```
 
-Example: `4ffbbf*` = serve wide, then forehand, forehand, backhand, backhand,
+example: `4ffbbf*` = serve wide, then forehand, forehand, backhand, backhand,
 forehand winner.
 
-## Serve direction (first shot only)
+## serve direction (first shot only)
 
 | Code | Meaning        |
 |------|----------------|
@@ -31,10 +29,9 @@ forehand winner.
 | `5`  | body           |
 | `6`  | down the T     |
 
-A faulted first serve is recorded, followed by the second serve; a double fault
-ends the point. (Exact fault/ace/unreturned encoding: TODO.)
+a faulted first serve gets recorded, then the second serve. double fault ends the point. still need to nail down how aces / unreturned serves are marked.
 
-## Shot types
+## shot types
 
 | Code | Shot                     |
 |------|--------------------------|
@@ -52,10 +49,9 @@ ends the point. (Exact fault/ace/unreturned encoding: TODO.)
 | `h`  | forehand half-volley     |
 | `i`  | backhand half-volley     |
 
-(List to be completed and verified against the instructions sheet. Unknown
-letters are a lexer error.)
+still filling this in from the instructions sheet. a letter thats not in this list is a lexer error.
 
-## Shot direction (rally shots)
+## shot direction (rally shots)
 
 | Code | Meaning                                            |
 |------|---------------------------------------------------|
@@ -63,7 +59,7 @@ letters are a lexer error.)
 | `2`  | down the middle                                   |
 | `3`  | to a right-hander's backhand corner (lefty: FH)   |
 
-## Return depth (service return only)
+## return depth (on the return only)
 
 | Code | Meaning                          |
 |------|----------------------------------|
@@ -71,7 +67,7 @@ letters are a lexer error.)
 | `8`  | moderately deep (behind service line) |
 | `9`  | very deep (back quarter of the court) |
 
-## Court position markers
+## court position markers
 
 | Code | Meaning        |
 |------|----------------|
@@ -79,7 +75,7 @@ letters are a lexer error.)
 | `-`  | shot hit at the net |
 | `=`  | shot hit at the baseline |
 
-## Point endings
+## how the point ended
 
 | Code | Meaning        |
 |------|----------------|
@@ -87,7 +83,7 @@ letters are a lexer error.)
 | `@`  | unforced error |
 | `#`  | forced error   |
 
-Error location (follows `@` or `#`):
+error location, comes right after `@` or `#`:
 
 | Code | Meaning         |
 |------|-----------------|
@@ -96,7 +92,7 @@ Error location (follows `@` or `#`):
 | `d`  | deep            |
 | `x`  | wide and deep   |
 
-## Worked example
+## a worked example
 
 ```
 5 r 3 7 b + 3 l 2 o = 1 r #
@@ -106,7 +102,7 @@ body serve; slice return to the backhand corner, shallow; backhand approach to
 the backhand corner; lob down the middle; overhead from the baseline to the
 forehand corner; forehand forced error.
 
-## Not yet handled (deferred past v1)
+## stuff im not handling yet
 
 - doubles
 - let cords / net cords
