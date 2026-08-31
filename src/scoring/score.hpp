@@ -54,6 +54,10 @@ Score step(const Score& score, Player point_winner,
 // "Ad-40" (server has advantage), "40-Ad". Games/sets not included.
 std::string game_score(const Score& score);
 
+// Broadcast-style line: "1-0 4-3 40-30" (sets, games, points). Once the match is
+// over only the set score is left, e.g. "2-1" (we don't keep per-set history).
+std::string scoreline(const Score& score);
+
 // One-line summary: "sets 1-0 | games 4-3 | 40-30 | server: P1".
 std::string describe(const Score& score);
 

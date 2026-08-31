@@ -62,6 +62,16 @@ std::string game_score(const Score& score) {
   return std::string(point_label(a)) + "-" + point_label(b);
 }
 
+std::string scoreline(const Score& score) {
+  std::string s = std::to_string(score.sets[0]) + "-" + std::to_string(score.sets[1]);
+  if (score.finished) {
+    return s;
+  }
+  s += " " + std::to_string(score.games[0]) + "-" + std::to_string(score.games[1]);
+  s += " " + game_score(score);
+  return s;
+}
+
 std::string describe(const Score& score) {
   if (score.finished) {
     return "FINISHED | sets " + std::to_string(score.sets[0]) + "-" +

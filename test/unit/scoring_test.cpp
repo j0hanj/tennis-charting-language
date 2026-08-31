@@ -8,6 +8,7 @@
 
 using tcl::scoring::describe;
 using tcl::scoring::game_score;
+using tcl::scoring::scoreline;
 using tcl::scoring::Player;
 using tcl::scoring::Score;
 using tcl::scoring::step;
@@ -100,6 +101,17 @@ TEST_CASE("match ends after two sets and reports the winner", "[scoring]") {
   CHECK(s.winner == Player::kOne);
   CHECK(s.sets == std::array<int, 2>{2, 0});
   CHECK(describe(s) == "FINISHED | sets 2-0 | winner: P1");
+}
+
+TEST_CASE("scoreline reads like a broadcast graphic", "[scoring]") {
+  CHECK(scoreline(Score{}) == "0-0 0-0 0-0");
+  CHECK(scoreline(play("AAABB")) == "0-0 0-0 40-30");
+
+  std::string set;
+  for (int i = 0; i < 6; ++i) set += "AAAA";
+  Score s = play(set + set);  // match over, P1 wins 2-0
+  CHECK(s.finished);
+  CHECK(scoreline(s) == "2-0");  // just the set score once it's done
 }
 
 TEST_CASE("step never produces an invalid state over a long random-ish sequence", "[scoring]") {
