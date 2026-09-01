@@ -16,27 +16,41 @@ const char* point_label(int p) {
 
 }  // namespace
 
+namespace {
+
+bool in_tiebreak(const Score& score, const MatchFormat& fmt) {
+  return fmt.has_tiebreak && score.games[0] == fmt.games_for_tiebreak &&
+         score.games[1] == fmt.games_for_tiebreak;
+}
+
+}  // namespace
+
 Score step(const Score& score, Player point_winner, const MatchFormat& fmt) {
   assert(!score.finished && "step() called on a finished match");
 
   Score s = score;
   const int w = index(point_winner);
   const int l = index(other(point_winner));
+  const bool breaker = in_tiebreak(score, fmt);
 
   s.points[w] += 1;
 
-  const bool game_won = s.points[w] >= fmt.points_to_win_game &&
-                        s.points[w] - s.points[l] >= fmt.game_win_margin;
+  const bool game_won = breaker ? s.points[w] >= fmt.tiebreak_points_to_win &&
+                                       s.points[w] - s.points[l] >= fmt.tiebreak_win_margin
+                                 : s.points[w] >= fmt.points_to_win_game &&
+                                       s.points[w] - s.points[l] >= fmt.game_win_margin;
   if (!game_won) {
     return s;
   }
 
   s.points = {0, 0};
-  s.games[w] += 1;
+  s.games[w] += 1; // a won breaker just makes this a 7-6 (or similar) game
   s.server = other(s.server);
 
-  const bool set_won = s.games[w] >= fmt.games_to_win_set &&
-                       s.games[w] - s.games[l] >= fmt.set_win_margin;
+  // winning the breaker always wins the set (7-6), regardless of the usual
+  // win-by-two-games margin
+  const bool set_won = breaker || (s.games[w] >= fmt.games_to_win_set &&
+                                   s.games[w] - s.games[l] >= fmt.set_win_margin);
   if (!set_won) {
     return s;
   }
@@ -51,7 +65,11 @@ Score step(const Score& score, Player point_winner, const MatchFormat& fmt) {
   return s;
 }
 
-std::string game_score(const Score& score) {
+std::string game_score(const Score& score, const MatchFormat& fmt) {
+  if (in_tiebreak(score, fmt)) {
+    return std::to_string(score.points[0]) + "-" + std::to_string(score.points[1]);
+  }
+
   const int a = score.points[0];
   const int b = score.points[1];
 
@@ -62,17 +80,17 @@ std::string game_score(const Score& score) {
   return std::string(point_label(a)) + "-" + point_label(b);
 }
 
-std::string scoreline(const Score& score) {
+std::string scoreline(const Score& score, const MatchFormat& fmt) {
   std::string s = std::to_string(score.sets[0]) + "-" + std::to_string(score.sets[1]);
   if (score.finished) {
     return s;
   }
   s += " " + std::to_string(score.games[0]) + "-" + std::to_string(score.games[1]);
-  s += " " + game_score(score);
+  s += " " + game_score(score, fmt);
   return s;
 }
 
-std::string describe(const Score& score) {
+std::string describe(const Score& score, const MatchFormat& fmt) {
   if (score.finished) {
     return "FINISHED | sets " + std::to_string(score.sets[0]) + "-" +
            std::to_string(score.sets[1]) + " | winner: " +
@@ -80,7 +98,7 @@ std::string describe(const Score& score) {
   }
   return "sets " + std::to_string(score.sets[0]) + "-" + std::to_string(score.sets[1]) +
          " | games " + std::to_string(score.games[0]) + "-" + std::to_string(score.games[1]) +
-         " | " + game_score(score) + " | server: " +
+         " | " + game_score(score, fmt) + " | server: " +
          (score.server == Player::kOne ? "P1" : "P2");
 }
 

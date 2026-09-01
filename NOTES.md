@@ -24,8 +24,23 @@ tests are in test/unit/scoring_test.cpp. haven't actually run them, need to
 install cmake on this laptop. compiled score.cpp on its own with clang to make
 sure it builds.
 
+## day 3
+tiebreak. put it behind a `has_tiebreak` flag in MatchFormat so the plain
+advantage-set default doesn't change. at 6-6 games the point rules switch to
+first-to-7-win-by-2, and winning the breaker wins the set no matter the game
+margin (7-6). game_score shows raw numbers like "6-6" during a breaker instead
+of 40-30 stuff.
+
+didn't do serve rotation inside the breaker yet (the 1 then 2-2-2 thing) - the
+server field still just flips per game. fine for now, the point winner is all
+that matters for the score.
+
+wrote a helper in the test that alternates games to get to exactly 6-6, because
+if one player just wins 6 straight the set's already over at 6-0 (obviously).
+tripped over that for a sec.
+
 ## next
-- tiebreak (first to 7, win by 2, serve pattern is 1 then 2-2-2...)
+- serve rotation during the breaker
 - best of 5
 - the final-set rules per tournament. wimbledon especially — advantage set
   before 2019, then 12-12 tiebreak, then 10-point tiebreak at 6-6 from 2022.

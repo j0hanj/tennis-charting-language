@@ -44,7 +44,7 @@ see `NOTES.md` for the running log and `docs/design.md` for how the pieces fit.
 ## todo
 
 - [x] scoring: points, deuce, games, sets, best of 3
-- [ ] scoring: tiebreak
+- [x] scoring: tiebreak (7 points, win by 2, set goes to 7-6)
 - [ ] scoring: best of 5
 - [ ] scoring: the wimbledon final-set rule changes (they changed it twice)
 - [ ] scoring: walk every reachable score, check none are impossible
