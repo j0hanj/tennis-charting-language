@@ -1,8 +1,10 @@
-# tcl — tennis charting language
+# tcl
 
-i watch a lot of tennis and got into charting matches. the notation everyone uses
-(from tennis abstract's [match charting project](https://github.com/JeffSackmann/tennis_MatchChartingProject))
-is this dense shorthand where a whole point is one string:
+messing around with tennis match data.
+
+people chart pro matches shot by shot, and the format everyone uses (the match
+charting project, off tennis abstract) is this shorthand where a whole point is
+one string:
 
 ```
 4ffbbf*
@@ -10,57 +12,52 @@ is this dense shorthand where a whole point is one string:
 
 serve out wide, forehand, forehand, backhand, backhand, forehand winner.
 
-there are thousands of pro matches typed out in that format and basically no code
-that reads it properly. so i'm writing a parser for it, plus some analysis on top.
-the notation is basically a tiny language so i'm building it like a compiler front
-end — tokenizer, parser, a checker, then stats. figured it's a better way to
-actually learn how parsers work than just reading about them.
+there's thousands of matches typed out like this and basically nothing that reads
+it properly - people load it into a spreadsheet or write a one-off script and
+move on. so this is me building an actual parser for it, plus some stats on top.
+eventually i want it to:
 
-## what it should do when it's further along
+- read a point string into something structured
+- read a whole charted match csv and check it's not broken - score doesn't add
+  up, players not alternating, impossible shot order
+- flag the actual charting mistakes in the data, there's a fair few
+- rally length distributions, what a guy does on the ball right after his serve,
+  error rate vs how long the rally goes, serve placement on break points
+- draw a point - animate the ball around the court
 
-- `tcl lint match.csv` — read a charted match, tell you if it's broken: score
-  doesn't add up, players not alternating, impossible shot sequence. the charting
-  data has real mistakes in it and this should catch them
-- `tcl stats match.csv` — rally length distributions, what a player does on the
-  shot right after their serve, error rate vs how long the rally is, serve
-  placement on break points
-- `tcl viz "4ffbbf*"` — draw the point, animate the ball around the court
-- `tcl parse "4ffbbf*"` — dump the parsed point as json
+## right now
 
-## where it's at right now
+pretty bare. what's there:
 
-early. so far:
-
-- **scoring state machine** (`src/scoring/`) — keeps score through a match.
-  needed because the notation only records who won each point, not the score, so
-  to check a match you replay every point and see if the final score matches the
-  record. points / deuce / advantage / games / sets / best of 3 work. no tiebreak
-  yet, if it hits 6-6 it just keeps going
-- cli that does `--version` and not much else
-- my notes on the notation in `docs/notation.md`
-
-see `NOTES.md` for the running log and `docs/design.md` for how the pieces fit.
+- scoring state machine (`src/scoring/`) - feed it point winners and it tracks
+  the score. needed because the shorthand only records who won each point, not
+  the score, so to check a match you replay it and see if the final score lines
+  up. points, deuce, games, sets, best of 3, tiebreak. no serve rotation inside
+  the breaker yet
+- a cli that does `--version` and nothing else
+- notes on the notation in `docs/notation.md`
 
 ## todo
 
 - [x] scoring: points, deuce, games, sets, best of 3
-- [x] scoring: tiebreak (7 points, win by 2, set goes to 7-6)
+- [x] scoring: tiebreak
+- [ ] scoring: serve rotation in the breaker
 - [ ] scoring: best of 5
-- [ ] scoring: the wimbledon final-set rule changes (they changed it twice)
-- [ ] scoring: walk every reachable score, check none are impossible
-- [ ] notation: write out the grammar properly
-- [ ] lexer
-- [ ] parser -> syntax tree for one point
-- [ ] nice error messages that point at the bad character
+- [ ] scoring: the wimbledon final-set rule changes (changed twice)
+- [ ] scoring: walk every reachable score, make sure none are impossible
+- [ ] write out the notation grammar properly
+- [ ] tokenizer
+- [ ] parser -> tree for one point
+- [ ] error messages that point at the bad character
 - [ ] read a full match csv
-- [ ] the semantic checks (alternation, score reconstruction)
-- [ ] flatten to a shot table
+- [ ] the checks (alternation, replay the score)
+- [ ] flatten to one row per shot
 - [ ] stats
-- [ ] the court visualizer
+- [ ] the court drawing
 
-## building
+## build
 
-need cmake (>= 3.20) and a c++20 compiler.
+need cmake + a c++20 compiler. catch2 gets pulled in for tests.
 
 ```
 cmake -B build
@@ -70,6 +67,6 @@ ctest --test-dir build
 
 ## data
 
-the match charting data isn't mine — it's jeff sackmann / tennis abstract
-(CC BY-NC-SA). i don't check it into the repo, `scripts/fetch_mcp_data.sh` pulls
-it into `data/`. the notation writeup in `docs/` is my own, from their guide.
+the match charting data isn't mine - it's jeff sackmann / tennis abstract
+(CC BY-NC-SA). i don't check it in, `scripts/fetch_mcp_data.sh` grabs it. the
+notation writeup in `docs/` is my own, from their guide.

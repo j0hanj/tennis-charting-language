@@ -1,7 +1,7 @@
 # how it's put together
 
-basically a compiler front end. a charting string goes through a few stages, each
-one small enough to test on its own.
+the charting string goes through a few stages, each small enough to test on its
+own. it ends up looking like a compiler front end.
 
 ```
 "4ffbbf*"
@@ -14,19 +14,19 @@ one small enough to test on its own.
 
 ## folders under src/
 
-- `scoring/` — keeps score. standalone, nothing depends on the parser. sema uses
+- `scoring/` - keeps score. standalone, nothing depends on the parser. sema uses
   it to check the score in a charted match adds up
-- `lexer/` — string -> tokens. if it hits a character it doesn't know it records
+- `lexer/` - string -> tokens. if it hits a character it doesn't know it records
   an error and keeps going instead of blowing up
-- `ast/` — the node types for a parsed point, just plain structs
-- `parser/` — hand written recursive descent, one point at a time. no yacc/antlr,
+- `ast/` - the node types for a parsed point, just plain structs
+- `parser/` - hand written recursive descent, one point at a time. no yacc/antlr,
   the whole point is to write it myself
-- `sema/` — the checks: players alternate, only one ending marker, score matches
+- `sema/` - the checks: players alternate, only one ending marker, score matches
   the record. fills in who won each point
-- `ir/` — turn a checked point into flat rows
-- `analytics/` — the stats, all computed off the flat rows
-- `viz/` — map shots to court coordinates, write an svg. no image library
-- `cli/` — arg parsing and glue
+- `ir/` - turn a checked point into flat rows
+- `analytics/` - the stats, all computed off the flat rows
+- `viz/` - map shots to court coordinates, write an svg. no image library
+- `cli/` - arg parsing and glue
 
 ## a couple of things i'm trying to stick to
 
