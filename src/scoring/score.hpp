@@ -61,6 +61,12 @@ struct Score {
 Score step(const Score& score, Player point_winner,
            const MatchFormat& fmt = MatchFormat::best_of_three_advantage_set());
 
+// Who serves the point about to be played. Normally just score.server. In a
+// tiebreak the serve goes one point, then two at a time, so it depends on how
+// many points have already been played.
+Player current_server(const Score& score,
+                       const MatchFormat& fmt = MatchFormat::best_of_three_advantage_set());
+
 // Human-readable current game score, e.g. "0-0", "40-30", "40-40",
 // "Ad-40" (server has advantage), "40-Ad". During a tiebreak this is just the
 // raw point count instead, e.g. "5-3". Games/sets not included.

@@ -39,9 +39,20 @@ wrote a helper in the test that alternates games to get to exactly 6-6, because
 if one player just wins 6 straight the set's already over at 6-0 (obviously).
 tripped over that for a sec.
 
+## day 4
+small cli command, `tcl score aabba`, replays point winners and prints the score
+line by line. mostly so i can eyeball the scoring engine without writing a test
+every time. `--tb` flag for the tiebreak format.
+
+then did serve rotation in the breaker. it's 1 point then 2 at a time,
+alternating. added `current_server()` that works it out from how many points
+have gone - the stored server field stays as the guy who serves point 1, and
+the flip at the end of the breaker already lands on the right person for the
+next set (whoever served first in the breaker receives first after).
+
 ## next
-- serve rotation during the breaker
 - best of 5
+- start on the notation grammar
 - the final-set rules per tournament. wimbledon especially — advantage set
   before 2019, then 12-12 tiebreak, then 10-point tiebreak at 6-6 from 2022.
   going to make MatchFormat hold the rules so step() doesn't turn into a pile of

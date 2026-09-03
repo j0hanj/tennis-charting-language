@@ -5,6 +5,7 @@
 #include <array>
 #include <string>
 
+using tcl::scoring::current_server;
 using tcl::scoring::describe;
 using tcl::scoring::game_score;
 using tcl::scoring::MatchFormat;
@@ -153,6 +154,30 @@ TEST_CASE("tiebreak also needs to be won by two", "[scoring][tiebreak]") {
   s = step(s, Player::kOne, fmt); // 8-7
   s = step(s, Player::kOne, fmt); // 9-7, P1 wins the breaker
   CHECK(s.sets == std::array<int, 2>{1, 0});
+}
+
+TEST_CASE("serve in the breaker goes 1 then 2 at a time", "[scoring][tiebreak]") {
+  const auto fmt = MatchFormat::best_of_three_with_tiebreak();
+  Score s = play(games_to_six_all(), {}, fmt); // 6-6, breaker about to start
+  const Player first = s.server;
+
+  CHECK(current_server(s, fmt) == first);          // point 1
+  s = step(s, Player::kOne, fmt);
+  CHECK(current_server(s, fmt) == other(first));   // point 2
+  s = step(s, Player::kOne, fmt);
+  CHECK(current_server(s, fmt) == other(first));   // point 3
+  s = step(s, Player::kOne, fmt);
+  CHECK(current_server(s, fmt) == first);          // point 4
+  s = step(s, Player::kOne, fmt);
+  CHECK(current_server(s, fmt) == first);          // point 5
+  s = step(s, Player::kOne, fmt);
+  CHECK(current_server(s, fmt) == other(first));   // point 6
+
+  s = play("AA", s, fmt); // points 6 and 7, P1 runs it out 7-0
+  CHECK(s.sets[0] == 1);
+  // whoever served the first breaker point receives the first game of next set,
+  // so the other player serves it
+  CHECK(s.server == other(first));
 }
 
 TEST_CASE("without has_tiebreak the default still just keeps playing", "[scoring][tiebreak]") {

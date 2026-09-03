@@ -65,6 +65,19 @@ Score step(const Score& score, Player point_winner, const MatchFormat& fmt) {
   return s;
 }
 
+Player current_server(const Score& score, const MatchFormat& fmt) {
+  if (!in_tiebreak(score, fmt)) {
+    return score.server;
+  }
+  const int played = score.points[0] + score.points[1];
+  if (played == 0) {
+    return score.server; // first point of the breaker
+  }
+  // points 2-3 are one player, 4-5 the other, 6-7 back again, ...
+  const int pair = (played - 1) / 2;
+  return (pair % 2 == 0) ? other(score.server) : score.server;
+}
+
 std::string game_score(const Score& score, const MatchFormat& fmt) {
   if (in_tiebreak(score, fmt)) {
     return std::to_string(score.points[0]) + "-" + std::to_string(score.points[1]);
@@ -99,7 +112,7 @@ std::string describe(const Score& score, const MatchFormat& fmt) {
   return "sets " + std::to_string(score.sets[0]) + "-" + std::to_string(score.sets[1]) +
          " | games " + std::to_string(score.games[0]) + "-" + std::to_string(score.games[1]) +
          " | " + game_score(score, fmt) + " | server: " +
-         (score.server == Player::kOne ? "P1" : "P2");
+         (current_server(score, fmt) == Player::kOne ? "P1" : "P2");
 }
 
 }  // namespace tcl::scoring

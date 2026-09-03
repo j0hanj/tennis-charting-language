@@ -42,7 +42,7 @@ pretty bare. what's there:
 
 - [x] scoring: points, deuce, games, sets, best of 3
 - [x] scoring: tiebreak
-- [ ] scoring: serve rotation in the breaker
+- [x] scoring: serve rotation in the breaker
 - [ ] scoring: best of 5
 - [ ] scoring: the wimbledon final-set rule changes (changed twice)
 - [ ] scoring: walk every reachable score, make sure none are impossible
