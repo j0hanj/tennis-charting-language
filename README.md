@@ -34,7 +34,8 @@ pretty bare. what's there:
   the score, so to check a match you replay it and see if the final score lines
   up. points, deuce, games, sets, best of 3, tiebreak. no serve rotation inside
   the breaker yet
-- a cli that does `--version` and nothing else
+- `tcl score aabba` replays point winners and prints the score as it goes.
+  `--tb` for a tiebreak at 6-6. mostly a way to eyeball the scoring engine
 - notes on the notation in `docs/notation.md`
 
 ## todo
