@@ -124,6 +124,21 @@ TEST_CASE("scoreline reads like a broadcast graphic", "[scoring]") {
   CHECK(scoreline(s) == "2-0");  // just the set score once it's done
 }
 
+TEST_CASE("best of five needs three sets", "[scoring]") {
+  const auto fmt = MatchFormat::best_of_five_advantage_set();
+  std::string set;
+  for (int i = 0; i < 6; ++i) set += "AAAA"; // one 6-0 set
+
+  Score s = play(set + set, {}, fmt);
+  CHECK_FALSE(s.finished); // 2-0, not done yet
+  CHECK(s.sets == std::array<int, 2>{2, 0});
+
+  s = play(set, s, fmt);
+  CHECK(s.finished);
+  CHECK(s.winner == Player::kOne);
+  CHECK(s.sets == std::array<int, 2>{3, 0});
+}
+
 TEST_CASE("tiebreak kicks in at 6-6 when the format has one", "[scoring][tiebreak]") {
   const auto fmt = MatchFormat::best_of_three_with_tiebreak();
   Score s = play(games_to_six_all(), {}, fmt);

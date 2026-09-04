@@ -42,6 +42,19 @@ struct MatchFormat {
     f.has_tiebreak = true;
     return f;
   }
+
+  static constexpr MatchFormat best_of_five_advantage_set() {
+    MatchFormat f;
+    f.sets_to_win = 3;
+    return f;
+  }
+
+  static constexpr MatchFormat best_of_five_with_tiebreak() {
+    MatchFormat f;
+    f.sets_to_win = 3;
+    f.has_tiebreak = true;
+    return f;
+  }
 };
 
 // A complete point-in-time state of a match.

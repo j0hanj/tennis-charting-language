@@ -18,9 +18,10 @@ int print_usage(std::ostream& os) {
   os << "usage: tcl <command> [args]\n"
         "\n"
         "commands:\n"
-        "  score <points> [--tb]   replay points (a = player 1, b = player 2)\n"
+        "  score <points> [--tb] [--bo5]\n"
+        "                           replay points (a = player 1, b = player 2)\n"
         "                           and print the score after each one. --tb\n"
-        "                           uses a tiebreak at 6-6\n"
+        "                           adds a tiebreak at 6-6, --bo5 is best of five\n"
         "  --version, -v            print version\n"
         "  --help, -h               this message\n"
         "\n"
@@ -31,10 +32,13 @@ int print_usage(std::ostream& os) {
 int run_score(int argc, char** argv) {
   std::string points;
   bool tiebreak = false;
+  bool bo5 = false;
   for (int i = 2; i < argc; ++i) {
     const std::string_view a = argv[i];
     if (a == "--tb") {
       tiebreak = true;
+    } else if (a == "--bo5") {
+      bo5 = true;
     } else {
       points += a;
     }
@@ -45,8 +49,15 @@ int run_score(int argc, char** argv) {
     return 2;
   }
 
-  const auto fmt = tiebreak ? tcl::scoring::MatchFormat::best_of_three_with_tiebreak()
-                            : tcl::scoring::MatchFormat::best_of_three_advantage_set();
+  using tcl::scoring::MatchFormat;
+  MatchFormat fmt;
+  if (bo5) {
+    fmt = tiebreak ? MatchFormat::best_of_five_with_tiebreak()
+                   : MatchFormat::best_of_five_advantage_set();
+  } else {
+    fmt = tiebreak ? MatchFormat::best_of_three_with_tiebreak()
+                   : MatchFormat::best_of_three_advantage_set();
+  }
 
   tcl::scoring::Score s;
   for (const char c : points) {
