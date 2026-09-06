@@ -1,13 +1,14 @@
 // tcl - command line entry point.
 //
-// so far: --version, and a little `score` command that replays a string of
-// point winners through the scoring engine. lint/parse/stats/viz come later.
+// so far: --version, `score` (replay point winners through the scoring engine),
+// and `lex` (dump the tokens for a charting string). parse/lint/stats/viz later.
 
 #include <cctype>
 #include <iostream>
 #include <string>
 #include <string_view>
 
+#include "lexer/lexer.hpp"
 #include "scoring/score.hpp"
 
 namespace {
@@ -22,11 +23,38 @@ int print_usage(std::ostream& os) {
         "                           replay points (a = player 1, b = player 2)\n"
         "                           and print the score after each one. --tb\n"
         "                           adds a tiebreak at 6-6, --bo5 is best of five\n"
+        "  lex <string>             dump the tokens for a charting string\n"
         "  --version, -v            print version\n"
         "  --help, -h               this message\n"
         "\n"
-        "planned: lint, parse, stats, viz\n";
+        "planned: parse, lint, stats, viz\n";
   return 0;
+}
+
+int run_lex(int argc, char** argv) {
+  if (argc < 3) {
+    std::cerr << "lex: give me a charting string, e.g. tcl lex 4ffbbf*\n";
+    return 2;
+  }
+
+  std::string src;
+  for (int i = 2; i < argc; ++i) {
+    if (i > 2) src += ' ';
+    src += argv[i];
+  }
+
+  const auto lexed = tcl::lexer::lex(src);
+  for (const auto& t : lexed.tokens) {
+    std::cout << t.offset << '\t' << tcl::lexer::kind_name(t.kind);
+    if (!t.text.empty()) std::cout << '\t' << t.text;
+    if (t.kind == tcl::lexer::Kind::kDigit) std::cout << "  (=" << t.value << ')';
+    std::cout << '\n';
+  }
+
+  for (const auto& d : lexed.diagnostics) {
+    std::cerr << "  at " << d.offset << ": " << d.message << '\n';
+  }
+  return lexed.ok() ? 0 : 1;
 }
 
 int run_score(int argc, char** argv) {
@@ -96,6 +124,9 @@ int main(int argc, char** argv) {
   }
   if (cmd == "score") {
     return run_score(argc, argv);
+  }
+  if (cmd == "lex") {
+    return run_lex(argc, argv);
   }
 
   std::cerr << "tcl: unknown command '" << cmd << "'\n";

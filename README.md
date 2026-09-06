@@ -32,10 +32,12 @@ pretty bare. what's there:
 - scoring state machine (`src/scoring/`) - feed it point winners and it tracks
   the score. needed because the shorthand only records who won each point, not
   the score, so to check a match you replay it and see if the final score lines
-  up. points, deuce, games, sets, best of 3, tiebreak. no serve rotation inside
-  the breaker yet
-- `tcl score aabba` replays point winners and prints the score as it goes.
-  `--tb` for a tiebreak at 6-6. mostly a way to eyeball the scoring engine
+  up. points, deuce, games, sets, best of 3 and 5, tiebreak with the serve
+  rotation
+- lexer (`src/lexer/`) - turns a charting string into tokens, flags characters
+  it doesn't know and keeps going
+- `tcl score aabba` replays point winners and prints the score as it goes
+  (`--tb`, `--bo5`). `tcl lex 4ffbbf*` dumps the tokens. mostly for eyeballing
 - notes on the notation in `docs/notation.md`
 
 ## todo
@@ -47,7 +49,7 @@ pretty bare. what's there:
 - [ ] scoring: the wimbledon final-set rule changes (changed twice)
 - [ ] scoring: walk every reachable score, make sure none are impossible
 - [ ] write out the notation grammar properly
-- [ ] tokenizer
+- [x] tokenizer
 - [ ] parser -> tree for one point
 - [ ] error messages that point at the bad character
 - [ ] read a full match csv

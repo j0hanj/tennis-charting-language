@@ -50,11 +50,23 @@ have gone - the stored server field stays as the guy who serves point 1, and
 the flip at the end of the breaker already lands on the right person for the
 next set (whoever served first in the breaker receives first after).
 
+## day 5
+best of 5 was tiny, just sets_to_win = 3, added the factory funcs + a --bo5 flag.
+
+then the lexer. `lex()` walks a charting string one char at a time and spits out
+tokens - shot / digit / position / end-marker / error-loc, plus unknown for
+anything else. digits (serve dir, rally dir, return depth) all come out as one
+kind with a value since which one it is depends on where it sits, that's the
+parser's problem. unknown chars get a diagnostic with the offset and it keeps
+going instead of bailing. `tcl lex 4ffbbf*` dumps the tokens.
+
+didn't overthink the token type - everything's a single char right now so text
+is just a 1-char string_view into the source. if multi-char markers show up
+later (serve and volley etc) the shape still works.
+
 ## next
-- best of 5
-- start on the notation grammar
-- the final-set rules per tournament. wimbledon especially — advantage set
+- write the grammar down properly in notation.md
+- parser: tokens -> a tree for one point
+- the final-set rules per tournament. wimbledon especially - advantage set
   before 2019, then 12-12 tiebreak, then 10-point tiebreak at 6-6 from 2022.
-  going to make MatchFormat hold the rules so step() doesn't turn into a pile of
-  ifs
-- after that: start on the actual notation parser
+  MatchFormat should hold the rules so step() doesn't turn into a pile of ifs
