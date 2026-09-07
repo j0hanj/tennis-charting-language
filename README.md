@@ -36,8 +36,11 @@ pretty bare. what's there:
   rotation
 - lexer (`src/lexer/`) - turns a charting string into tokens, flags characters
   it doesn't know and keeps going
-- `tcl score aabba` replays point winners and prints the score as it goes
-  (`--tb`, `--bo5`). `tcl lex 4ffbbf*` dumps the tokens. mostly for eyeballing
+- parser (`src/parser/`, `src/ast/`) - hand-written recursive descent, tokens ->
+  a tree for one point (serve, rally of shots with direction/depth/position, how
+  it ended). partial tree + diagnostics on bad input, doesn't throw
+- `tcl score aabba` (`--tb`, `--bo5`), `tcl lex 4ffbbf*`, `tcl parse 4ffbbf*` -
+  mostly for eyeballing while building
 - notes on the notation in `docs/notation.md`
 
 ## todo
@@ -50,8 +53,9 @@ pretty bare. what's there:
 - [ ] scoring: walk every reachable score, make sure none are impossible
 - [ ] write out the notation grammar properly
 - [x] tokenizer
-- [ ] parser -> tree for one point
-- [ ] error messages that point at the bad character
+- [x] parser -> tree for one point
+- [ ] error messages that point at the bad character (offsets are there, need
+      the caret/underline output)
 - [ ] read a full match csv
 - [ ] the checks (alternation, replay the score)
 - [ ] flatten to one row per shot

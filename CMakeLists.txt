@@ -15,6 +15,8 @@ add_compile_options(-Wall -Wextra -Wpedantic)
 add_library(tcl_core STATIC
   src/scoring/score.cpp
   src/lexer/lexer.cpp
+  src/ast/ast.cpp
+  src/parser/parser.cpp
 )
 target_include_directories(tcl_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
 

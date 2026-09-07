@@ -64,9 +64,28 @@ didn't overthink the token type - everything's a single char right now so text
 is just a 1-char string_view into the source. if multi-char markers show up
 later (serve and volley etc) the shape still works.
 
+## day 6
+the parser. recursive descent, one point string in, a tree out
+(serve / rally of shots / outcome). `src/ast/` has the node structs,
+`src/parser/` does the walking.
+
+structure of a point string turned out simple once i stopped overthinking it:
+serve direction digit, then shots, then an ending marker. a shot is a letter
+then any mix of a direction digit (1-3), a depth digit (7-9) and a position
+mark (+ - =) in whatever order - the doc examples put them in different orders
+so i just consume the run and sort each piece by what it is.
+
+drops the kUnknown tokens before parsing so the lexer's the only thing that
+complains about weird characters - otherwise one bad char threw like three
+errors. everything returns a best-effort tree even on bad input, no exceptions.
+`tcl parse 4ffbbf*` prints it.
+
+second serves / double faults aren't in here - the mcp csv keeps 1st and 2nd
+serve in separate columns so that's a level up, once i'm reading the csv.
+
 ## next
-- write the grammar down properly in notation.md
-- parser: tokens -> a tree for one point
+- caret/underline error output (the offsets are already on every diagnostic)
+- read a full match csv
 - the final-set rules per tournament. wimbledon especially - advantage set
   before 2019, then 12-12 tiebreak, then 10-point tiebreak at 6-6 from 2022.
   MatchFormat should hold the rules so step() doesn't turn into a pile of ifs

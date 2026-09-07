@@ -1,7 +1,7 @@
 // tcl - command line entry point.
 //
-// so far: --version, `score` (replay point winners through the scoring engine),
-// and `lex` (dump the tokens for a charting string). parse/lint/stats/viz later.
+// so far: --version, `score` (replay point winners), `lex` (token dump), and
+// `parse` (dump the parsed tree for a charting string). lint/stats/viz later.
 
 #include <cctype>
 #include <iostream>
@@ -9,6 +9,7 @@
 #include <string_view>
 
 #include "lexer/lexer.hpp"
+#include "parser/parser.hpp"
 #include "scoring/score.hpp"
 
 namespace {
@@ -24,11 +25,37 @@ int print_usage(std::ostream& os) {
         "                           and print the score after each one. --tb\n"
         "                           adds a tiebreak at 6-6, --bo5 is best of five\n"
         "  lex <string>             dump the tokens for a charting string\n"
+        "  parse <string>           parse a charting string and print the tree\n"
         "  --version, -v            print version\n"
         "  --help, -h               this message\n"
         "\n"
-        "planned: parse, lint, stats, viz\n";
+        "planned: lint, stats, viz\n";
   return 0;
+}
+
+std::string join_args(int argc, char** argv) {
+  std::string s;
+  for (int i = 2; i < argc; ++i) {
+    if (i > 2) s += ' ';
+    s += argv[i];
+  }
+  return s;
+}
+
+int run_parse(int argc, char** argv) {
+  if (argc < 3) {
+    std::cerr << "parse: give me a charting string, e.g. tcl parse 4ffbbf*\n";
+    return 2;
+  }
+
+  const auto result = tcl::parser::parse(join_args(argc, argv));
+  if (result.point) {
+    std::cout << tcl::ast::to_string(*result.point);
+  }
+  for (const auto& d : result.diagnostics) {
+    std::cerr << "  at " << d.offset << ": " << d.message << '\n';
+  }
+  return result.ok() ? 0 : 1;
 }
 
 int run_lex(int argc, char** argv) {
@@ -37,13 +64,7 @@ int run_lex(int argc, char** argv) {
     return 2;
   }
 
-  std::string src;
-  for (int i = 2; i < argc; ++i) {
-    if (i > 2) src += ' ';
-    src += argv[i];
-  }
-
-  const auto lexed = tcl::lexer::lex(src);
+  const auto lexed = tcl::lexer::lex(join_args(argc, argv));
   for (const auto& t : lexed.tokens) {
     std::cout << t.offset << '\t' << tcl::lexer::kind_name(t.kind);
     if (!t.text.empty()) std::cout << '\t' << t.text;
@@ -127,6 +148,9 @@ int main(int argc, char** argv) {
   }
   if (cmd == "lex") {
     return run_lex(argc, argv);
+  }
+  if (cmd == "parse") {
+    return run_parse(argc, argv);
   }
 
   std::cerr << "tcl: unknown command '" << cmd << "'\n";
