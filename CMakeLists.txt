@@ -17,6 +17,7 @@ add_library(tcl_core STATIC
   src/lexer/lexer.cpp
   src/ast/ast.cpp
   src/parser/parser.cpp
+  src/viz/court.cpp
 )
 target_include_directories(tcl_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
 

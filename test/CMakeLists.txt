@@ -12,6 +12,7 @@ add_executable(tcl_tests
   unit/scoring_test.cpp
   unit/lexer_test.cpp
   unit/parser_test.cpp
+  unit/viz_test.cpp
 )
 target_link_libraries(tcl_tests PRIVATE tcl_core Catch2::Catch2WithMain)
 

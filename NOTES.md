@@ -83,6 +83,18 @@ errors. everything returns a best-effort tree even on bad input, no exceptions.
 second serves / double faults aren't in here - the mcp csv keeps 1st and 2nd
 serve in separate columns so that's a level up, once i'm reading the csv.
 
+## day 7
+court drawing. `src/viz/` takes a parsed Point and writes an svg - the court
+(singles, real proportions, 9px a foot), then the ball path as a polyline
+bouncing end to end. serve direction picks the service box spot, shot direction
+1/2/3 -> left/mid/right, depth 7/8/9 -> how far back. blue dot on the serve,
+gold dot on a winner, red x where an error went (net / wide / deep from the
+error location code).
+
+it's a schematic, not real tracking - the notation doesn't have coordinates, so
+i'm not pretending. put four rendered ones in docs/examples and one in the
+readme. `tcl viz "4ffbbf*" -o point.svg`.
+
 ## next
 - caret/underline error output (the offsets are already on every diagnostic)
 - read a full match csv

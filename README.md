@@ -12,6 +12,12 @@ one string:
 
 serve out wide, forehand, forehand, backhand, backhand, forehand winner.
 
+`tcl viz` draws it (rough - the notation only gives loose directions):
+
+<img src="docs/examples/long-rally.svg" width="260" alt="a charted point drawn on a court">
+
+more in [docs/examples](docs/examples).
+
 there's thousands of matches typed out like this and basically nothing that reads
 it properly - people load it into a spreadsheet or write a one-off script and
 move on. so this is me building an actual parser for it, plus some stats on top.
@@ -39,8 +45,10 @@ pretty bare. what's there:
 - parser (`src/parser/`, `src/ast/`) - hand-written recursive descent, tokens ->
   a tree for one point (serve, rally of shots with direction/depth/position, how
   it ended). partial tree + diagnostics on bad input, doesn't throw
-- `tcl score aabba` (`--tb`, `--bo5`), `tcl lex 4ffbbf*`, `tcl parse 4ffbbf*` -
-  mostly for eyeballing while building
+- viz (`src/viz/`) - `tcl viz "4ffbbf*" -o point.svg` draws the point on a court
+  from the parsed shots. schematic, positions are approximate
+- `tcl score aabba` (`--tb`, `--bo5`), `tcl lex 4ffbbf*`, `tcl parse 4ffbbf*`,
+  `tcl viz 4ffbbf*` - mostly for eyeballing while building
 - notes on the notation in `docs/notation.md`
 
 ## todo
@@ -60,7 +68,7 @@ pretty bare. what's there:
 - [ ] the checks (alternation, replay the score)
 - [ ] flatten to one row per shot
 - [ ] stats
-- [ ] the court drawing
+- [x] the court drawing (schematic for now, no real coordinates)
 
 ## build
 

@@ -1,9 +1,11 @@
 // tcl - command line entry point.
 //
-// so far: --version, `score` (replay point winners), `lex` (token dump), and
-// `parse` (dump the parsed tree for a charting string). lint/stats/viz later.
+// so far: --version, `score` (replay point winners), `lex` (token dump),
+// `parse` (dump the parsed tree), `viz` (draw the point as an svg). lint/stats
+// still to come.
 
 #include <cctype>
+#include <fstream>
 #include <iostream>
 #include <string>
 #include <string_view>
@@ -11,6 +13,7 @@
 #include "lexer/lexer.hpp"
 #include "parser/parser.hpp"
 #include "scoring/score.hpp"
+#include "viz/court.hpp"
 
 namespace {
 
@@ -26,10 +29,50 @@ int print_usage(std::ostream& os) {
         "                           adds a tiebreak at 6-6, --bo5 is best of five\n"
         "  lex <string>             dump the tokens for a charting string\n"
         "  parse <string>           parse a charting string and print the tree\n"
+        "  viz <string> [-o file]   draw the point as an svg (stdout by default)\n"
         "  --version, -v            print version\n"
         "  --help, -h               this message\n"
         "\n"
-        "planned: lint, stats, viz\n";
+        "planned: lint, stats\n";
+  return 0;
+}
+
+int run_viz(int argc, char** argv) {
+  std::string src;
+  std::string out_path;
+  for (int i = 2; i < argc; ++i) {
+    const std::string_view a = argv[i];
+    if ((a == "-o" || a == "--out") && i + 1 < argc) {
+      out_path = argv[++i];
+    } else {
+      if (!src.empty()) src += ' ';
+      src += argv[i];
+    }
+  }
+
+  if (src.empty()) {
+    std::cerr << "viz: give me a charting string, e.g. tcl viz 4ffbbf* -o point.svg\n";
+    return 2;
+  }
+
+  const auto result = tcl::parser::parse(src);
+  for (const auto& d : result.diagnostics) {
+    std::cerr << "  at " << d.offset << ": " << d.message << '\n';
+  }
+  if (!result.point) return 1;
+
+  const std::string svg = tcl::viz::render_svg(*result.point, src);
+  if (out_path.empty()) {
+    std::cout << svg;
+  } else {
+    std::ofstream file(out_path);
+    if (!file) {
+      std::cerr << "viz: can't write " << out_path << '\n';
+      return 2;
+    }
+    file << svg;
+    std::cerr << "wrote " << out_path << '\n';
+  }
   return 0;
 }
 
@@ -151,6 +194,9 @@ int main(int argc, char** argv) {
   }
   if (cmd == "parse") {
     return run_parse(argc, argv);
+  }
+  if (cmd == "viz") {
+    return run_viz(argc, argv);
   }
 
   std::cerr << "tcl: unknown command '" << cmd << "'\n";
