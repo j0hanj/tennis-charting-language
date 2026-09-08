@@ -11,6 +11,7 @@ add_executable(tcl_tests
   unit/smoke_test.cpp
   unit/scoring_test.cpp
   unit/lexer_test.cpp
+  unit/render_test.cpp
   unit/parser_test.cpp
   unit/viz_test.cpp
 )

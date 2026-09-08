@@ -95,8 +95,18 @@ it's a schematic, not real tracking - the notation doesn't have coordinates, so
 i'm not pretending. put four rendered ones in docs/examples and one in the
 readme. `tcl viz "4ffbbf*" -o point.svg`.
 
+## day 8
+caret error output. `render_diagnostic()` in src/lexer/ prints the source with
+a `^` under the bad offset, compiler style:
+
+    4fQf*
+      ^ don't recognize 'Q'
+
+offsets past the end (like "expected an ending") clamp to just after the last
+char so they still point somewhere. `parse`, `lex` and `viz` all use it now
+instead of the plain "at N: msg" line.
+
 ## next
-- caret/underline error output (the offsets are already on every diagnostic)
 - read a full match csv
 - the final-set rules per tournament. wimbledon especially - advantage set
   before 2019, then 12-12 tiebreak, then 10-point tiebreak at 6-6 from 2022.

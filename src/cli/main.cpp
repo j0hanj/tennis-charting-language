@@ -11,6 +11,7 @@
 #include <string_view>
 
 #include "lexer/lexer.hpp"
+#include "lexer/render.hpp"
 #include "parser/parser.hpp"
 #include "scoring/score.hpp"
 #include "viz/court.hpp"
@@ -56,8 +57,8 @@ int run_viz(int argc, char** argv) {
   }
 
   const auto result = tcl::parser::parse(src);
-  for (const auto& d : result.diagnostics) {
-    std::cerr << "  at " << d.offset << ": " << d.message << '\n';
+  if (!result.diagnostics.empty()) {
+    std::cerr << tcl::lexer::render_diagnostics(src, result.diagnostics) << '\n';
   }
   if (!result.point) return 1;
 
@@ -91,12 +92,13 @@ int run_parse(int argc, char** argv) {
     return 2;
   }
 
-  const auto result = tcl::parser::parse(join_args(argc, argv));
+  const std::string src = join_args(argc, argv);
+  const auto result = tcl::parser::parse(src);
   if (result.point) {
     std::cout << tcl::ast::to_string(*result.point);
   }
-  for (const auto& d : result.diagnostics) {
-    std::cerr << "  at " << d.offset << ": " << d.message << '\n';
+  if (!result.diagnostics.empty()) {
+    std::cerr << '\n' << tcl::lexer::render_diagnostics(src, result.diagnostics) << '\n';
   }
   return result.ok() ? 0 : 1;
 }
@@ -107,7 +109,8 @@ int run_lex(int argc, char** argv) {
     return 2;
   }
 
-  const auto lexed = tcl::lexer::lex(join_args(argc, argv));
+  const std::string src = join_args(argc, argv);
+  const auto lexed = tcl::lexer::lex(src);
   for (const auto& t : lexed.tokens) {
     std::cout << t.offset << '\t' << tcl::lexer::kind_name(t.kind);
     if (!t.text.empty()) std::cout << '\t' << t.text;
@@ -115,8 +118,8 @@ int run_lex(int argc, char** argv) {
     std::cout << '\n';
   }
 
-  for (const auto& d : lexed.diagnostics) {
-    std::cerr << "  at " << d.offset << ": " << d.message << '\n';
+  if (!lexed.diagnostics.empty()) {
+    std::cerr << '\n' << tcl::lexer::render_diagnostics(src, lexed.diagnostics) << '\n';
   }
   return lexed.ok() ? 0 : 1;
 }

@@ -44,7 +44,13 @@ pretty bare. what's there:
   it doesn't know and keeps going
 - parser (`src/parser/`, `src/ast/`) - hand-written recursive descent, tokens ->
   a tree for one point (serve, rally of shots with direction/depth/position, how
-  it ended). partial tree + diagnostics on bad input, doesn't throw
+  it ended). partial tree + diagnostics on bad input, doesn't throw. errors
+  print with a caret under the bad character:
+
+  ```
+    4fQf*
+      ^ don't recognize 'Q'
+  ```
 - viz (`src/viz/`) - `tcl viz "4ffbbf*" -o point.svg` draws the point on a court
   from the parsed shots. schematic, positions are approximate
 - `tcl score aabba` (`--tb`, `--bo5`), `tcl lex 4ffbbf*`, `tcl parse 4ffbbf*`,
@@ -62,8 +68,8 @@ pretty bare. what's there:
 - [ ] write out the notation grammar properly
 - [x] tokenizer
 - [x] parser -> tree for one point
-- [ ] error messages that point at the bad character (offsets are there, need
-      the caret/underline output)
+- [x] error messages that point at the bad character (caret under the offset,
+      like a compiler)
 - [ ] read a full match csv
 - [ ] the checks (alternation, replay the score)
 - [ ] flatten to one row per shot
