@@ -106,8 +106,30 @@ offsets past the end (like "expected an ending") clamp to just after the last
 char so they still point somewhere. `parse`, `lex` and `viz` all use it now
 instead of the plain "at N: msg" line.
 
+## day 9
+csv reader. `src/match/` has a small csv line splitter (handles quoted fields,
+`""` escapes) and `read_points_csv()` that reads a match charting project
+"-points" file by column name, so it doesn't care about column order and
+ignores columns it doesn't need. only required column is "1st". bad numbers or
+a missing header get logged as an error but don't drop the row/file - same
+"one bad thing shouldn't kill the rest" idea as the lexer.
+
+pulled 10 real rows from the actual dataset for `test/corpus/sample-points.csv`
+and ran `tcl points` on them, and immediately found a real bug: my notation
+docs had the error-location letter coming *after* the `@`/`#`/`*` marker
+(`...@n`), but real charted points put it *before* (`...n@`). half the sample
+rows failed to parse because of it. flipped `parse_ending()` to check for the
+error-loc token before the end marker instead of after, fixed notation.md, and
+now only 2 of the 10 real rows have anything to say - both are shot codes i
+haven't added yet (`;` and `^` for let cords, `j` - not sure what that one is
+yet), which is expected, they're still on the "not handling yet" list.
+
+`tcl points match.csv` reports rows / points parsed / how many the parser
+flagged.
+
 ## next
-- read a full match csv
 - the final-set rules per tournament. wimbledon especially - advantage set
   before 2019, then 12-12 tiebreak, then 10-point tiebreak at 6-6 from 2022.
   MatchFormat should hold the rules so step() doesn't turn into a pile of ifs
+- sema: alternation + score reconstruction, now that there's a real csv to
+  test it against

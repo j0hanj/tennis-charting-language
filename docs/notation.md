@@ -83,7 +83,9 @@ still filling this in from the instructions sheet. a letter thats not in this li
 | `@`  | unforced error |
 | `#`  | forced error   |
 
-error location, comes right after `@` or `#`:
+error location, comes right *before* `@` or `#` - e.g. an unforced net error
+ends `...n@`, not `...@n`. i had this backwards at first, only noticed when i
+ran the parser against real charted rows and it kept failing right there:
 
 | Code | Meaning         |
 |------|-----------------|

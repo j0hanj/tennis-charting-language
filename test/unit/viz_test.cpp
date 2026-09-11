@@ -30,7 +30,7 @@ TEST_CASE("render_svg produces a well-formed svg", "[viz]") {
 
 TEST_CASE("a winner ends gold, an error ends red", "[viz]") {
   CHECK(svg_for("4ffbbf*").find("#f4c542") != std::string::npos);
-  const std::string err = svg_for("4bf@n");
+  const std::string err = svg_for("4bfn@");
   CHECK(err.find("#e5484d") != std::string::npos);
   CHECK(err.find("net") != std::string::npos); // tag mentions where
 }

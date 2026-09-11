@@ -12,6 +12,7 @@
 
 #include "lexer/lexer.hpp"
 #include "lexer/render.hpp"
+#include "match/reader.hpp"
 #include "parser/parser.hpp"
 #include "scoring/score.hpp"
 #include "viz/court.hpp"
@@ -31,11 +32,45 @@ int print_usage(std::ostream& os) {
         "  lex <string>             dump the tokens for a charting string\n"
         "  parse <string>           parse a charting string and print the tree\n"
         "  viz <string> [-o file]   draw the point as an svg (stdout by default)\n"
+        "  points <file.csv>        read a match-charting-project points csv,\n"
+        "                           run every point through the parser\n"
         "  --version, -v            print version\n"
         "  --help, -h               this message\n"
         "\n"
         "planned: lint, stats\n";
   return 0;
+}
+
+int run_points(int argc, char** argv) {
+  if (argc < 3) {
+    std::cerr << "points: give me a csv file, e.g. tcl points match.csv\n";
+    return 2;
+  }
+
+  std::ifstream file(argv[2]);
+  if (!file) {
+    std::cerr << "points: can't open " << argv[2] << '\n';
+    return 2;
+  }
+
+  const auto result = tcl::match::read_points_csv(file);
+  for (const auto& e : result.errors) {
+    std::cerr << "  " << e << '\n';
+  }
+
+  int parsed = 0;
+  int with_problems = 0;
+  for (const auto& row : result.rows) {
+    // if the first serve faulted, the real point is in "2nd"
+    const std::string& src = !row.second.empty() ? row.second : row.first;
+    if (src.empty()) continue;
+    ++parsed;
+    if (!tcl::parser::parse(src).ok()) ++with_problems;
+  }
+
+  std::cout << result.rows.size() << " rows, " << parsed << " points parsed, "
+            << with_problems << " the parser had something to say about\n";
+  return result.errors.empty() ? 0 : 1;
 }
 
 int run_viz(int argc, char** argv) {
@@ -200,6 +235,9 @@ int main(int argc, char** argv) {
   }
   if (cmd == "viz") {
     return run_viz(argc, argv);
+  }
+  if (cmd == "points") {
+    return run_points(argc, argv);
   }
 
   std::cerr << "tcl: unknown command '" << cmd << "'\n";

@@ -53,8 +53,12 @@ pretty bare. what's there:
   ```
 - viz (`src/viz/`) - `tcl viz "4ffbbf*" -o point.svg` draws the point on a court
   from the parsed shots. schematic, positions are approximate
+- csv reader (`src/match/`) - reads a match charting project "-points" csv by
+  column name (order/extra columns don't matter). `tcl points match.csv` runs
+  every point through the parser and reports how many it had something to say
+  about
 - `tcl score aabba` (`--tb`, `--bo5`), `tcl lex 4ffbbf*`, `tcl parse 4ffbbf*`,
-  `tcl viz 4ffbbf*` - mostly for eyeballing while building
+  `tcl viz 4ffbbf*`, `tcl points file.csv` - mostly for eyeballing while building
 - notes on the notation in `docs/notation.md`
 
 ## todo
@@ -70,7 +74,7 @@ pretty bare. what's there:
 - [x] parser -> tree for one point
 - [x] error messages that point at the bad character (caret under the offset,
       like a compiler)
-- [ ] read a full match csv
+- [x] read a full match csv
 - [ ] the checks (alternation, replay the score)
 - [ ] flatten to one row per shot
 - [ ] stats

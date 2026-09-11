@@ -19,6 +19,8 @@ add_library(tcl_core STATIC
   src/ast/ast.cpp
   src/parser/parser.cpp
   src/viz/court.cpp
+  src/match/csv.cpp
+  src/match/reader.cpp
 )
 target_include_directories(tcl_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
 

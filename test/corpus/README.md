@@ -1,14 +1,14 @@
-# Test corpus
+# test corpus
 
-Hand-decoded points used as golden tests for the lexer, parser, and sema.
+hand-decoded points used as golden tests for the lexer, parser, and sema.
 
-Each case is a charting string plus the expected parsed structure (as JSON),
-covering one feature: plain rally, ace, double fault, second serve, approach +
-net, lob + overhead, forced vs unforced error, each error location, a 20+ shot
-rally, and a few known-tricky real points.
+`sample-points.csv` is 10 real rows (one header + 10 points) from the Match
+Charting Project's `charting-m-points-2020s.csv`, used to test the csv reader
+and to run the parser against real data instead of just made-up strings.
+source: jeff sackmann / tennis abstract, CC BY-NC-SA 4.0
+(github.com/JeffSackmann/tennis_MatchChartingProject) - a small excerpt kept
+here for tests, the full dataset isn't checked into this repo (see
+`scripts/fetch_mcp_data.sh`).
 
-A handful of full charted matches (with attribution) are kept here too, for
-end-to-end score-reconstruction tests.
-
-Source data: Match Charting Project, Jeff Sackmann / Tennis Abstract,
-CC BY-NC-SA 4.0. See `../../NOTICE`.
+still need: hand-decoded points covering plain rally, ace, double fault, second
+serve, approach + net, lob + overhead, each error location, a 20+ shot rally.

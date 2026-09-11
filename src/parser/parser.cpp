@@ -66,6 +66,21 @@ Shot parse_shot(Cursor& c) {
 }
 
 std::optional<tcl::ast::Outcome> parse_ending(Cursor& c) {
+  // real charted points put the error location right before the marker
+  // ("6f18f3d@", not "...@d" like the doc examples I wrote first suggested -
+  // found by running this against actual match charting project rows)
+  std::optional<ErrorLoc> where;
+  if (c.at(Kind::kErrorLoc)) {
+    const Token& loc = c.advance();
+    switch (loc.text[0]) {
+      case 'n': where = ErrorLoc::kNet; break;
+      case 'w': where = ErrorLoc::kWide; break;
+      case 'd': where = ErrorLoc::kDeep; break;
+      case 'x': where = ErrorLoc::kWideDeep; break;
+      default: break;
+    }
+  }
+
   if (!c.at(Kind::kEndMarker)) {
     c.error(c.peek().offset, "point doesn't end with * @ or #");
     return std::nullopt;
@@ -74,22 +89,12 @@ std::optional<tcl::ast::Outcome> parse_ending(Cursor& c) {
   const Token& marker = c.advance();
   tcl::ast::Outcome out;
   out.offset = marker.offset;
+  out.where = where;
   switch (marker.text[0]) {
     case '*': out.ender = Ender::kWinner; break;
     case '@': out.ender = Ender::kUnforcedError; break;
     case '#': out.ender = Ender::kForcedError; break;
     default: break;
-  }
-
-  if (c.at(Kind::kErrorLoc)) {
-    const Token& loc = c.advance();
-    switch (loc.text[0]) {
-      case 'n': out.where = ErrorLoc::kNet; break;
-      case 'w': out.where = ErrorLoc::kWide; break;
-      case 'd': out.where = ErrorLoc::kDeep; break;
-      case 'x': out.where = ErrorLoc::kWideDeep; break;
-      default: break;
-    }
   }
   return out;
 }

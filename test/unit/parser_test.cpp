@@ -55,12 +55,12 @@ TEST_CASE("direction, depth and position hang off the right shots", "[parser]") 
 }
 
 TEST_CASE("error endings carry the location", "[parser]") {
-  auto a = parse("4f@n");
+  auto a = parse("4fn@");
   REQUIRE(a.ok());
   CHECK(a.point->outcome->ender == Ender::kUnforcedError);
   CHECK(a.point->outcome->where == ErrorLoc::kNet);
 
-  auto b = parse("4bf#w");
+  auto b = parse("4bfw#");
   REQUIRE(b.ok());
   CHECK(b.point->outcome->ender == Ender::kForcedError);
   CHECK(b.point->outcome->where == ErrorLoc::kWide);
@@ -107,7 +107,7 @@ TEST_CASE("trailing junk after the ending is flagged", "[parser]") {
 }
 
 TEST_CASE("to_string dumps the tree", "[parser]") {
-  auto r = parse("4f3b@d");
+  auto r = parse("4f3bd@");
   REQUIRE(r.point.has_value());
   const std::string dump = tcl::ast::to_string(*r.point);
   CHECK(dump.find("serve dir=4") != std::string::npos);
