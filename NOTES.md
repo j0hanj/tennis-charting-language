@@ -127,9 +127,33 @@ yet), which is expected, they're still on the "not handling yet" list.
 `tcl points match.csv` reports rows / points parsed / how many the parser
 flagged.
 
+## day 10
+sema, the actual point of this project: does the charted match make sense.
+`src/sema/reconcile.cpp` replays every row's PtWinner through the scoring
+engine and checks it against the row's own Pts column.
+
+took a minute to figure out what Pts actually means. it's not "player 1 - player
+2", it's **server first** - whoever's serving that point has their count listed
+first, no matter which player that is. so when the server is player 2 i swap my
+internal score before comparing. also AD-40 in the file vs the Ad-40 i render -
+just compare case-insensitive, not worth caring about.
+
+only handles best of 3 with a standard tiebreak so far (same gap as scoring).
+if a match needs different rules the replay finishes "early" - instead of
+spamming an error for every row after that, it logs one and stops checking
+that match_id, picks back up clean on the next one.
+
+swapped `test/corpus/sample-points.csv` to points 1-12 of a match instead of
+a random slice from the middle - a middle slice starts mid-game with no way to
+know the real starting score, so reconciliation couldn't check anything
+useful. points 1-12 from the start of a real match now lint completely clean:
+0 parse problems, 12/12 scores match.
+
+new `tcl lint file.csv` - runs points plus the score check, one command.
+
 ## next
 - the final-set rules per tournament. wimbledon especially - advantage set
   before 2019, then 12-12 tiebreak, then 10-point tiebreak at 6-6 from 2022.
   MatchFormat should hold the rules so step() doesn't turn into a pile of ifs
-- sema: alternation + score reconstruction, now that there's a real csv to
-  test it against
+- alternation check (does the rally actually go server/returner/server/...)
+- stats off the shot table, once there's an IR to flatten into

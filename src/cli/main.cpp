@@ -1,8 +1,9 @@
 // tcl - command line entry point.
 //
 // so far: --version, `score` (replay point winners), `lex` (token dump),
-// `parse` (dump the parsed tree), `viz` (draw the point as an svg). lint/stats
-// still to come.
+// `parse` (dump the parsed tree), `viz` (draw the point as an svg), `points`
+// (parse every point in a csv), `lint` (points + check the score against the
+// file). stats still to come.
 
 #include <cctype>
 #include <fstream>
@@ -15,6 +16,7 @@
 #include "match/reader.hpp"
 #include "parser/parser.hpp"
 #include "scoring/score.hpp"
+#include "sema/reconcile.hpp"
 #include "viz/court.hpp"
 
 namespace {
@@ -34,10 +36,12 @@ int print_usage(std::ostream& os) {
         "  viz <string> [-o file]   draw the point as an svg (stdout by default)\n"
         "  points <file.csv>        read a match-charting-project points csv,\n"
         "                           run every point through the parser\n"
+        "  lint <file.csv>          points, plus replay PtWinner and check the\n"
+        "                           score against the file's own Pts column\n"
         "  --version, -v            print version\n"
         "  --help, -h               this message\n"
         "\n"
-        "planned: lint, stats\n";
+        "planned: stats\n";
   return 0;
 }
 
@@ -71,6 +75,52 @@ int run_points(int argc, char** argv) {
   std::cout << result.rows.size() << " rows, " << parsed << " points parsed, "
             << with_problems << " the parser had something to say about\n";
   return result.errors.empty() ? 0 : 1;
+}
+
+int run_lint(int argc, char** argv) {
+  if (argc < 3) {
+    std::cerr << "lint: give me a csv file, e.g. tcl lint match.csv\n";
+    return 2;
+  }
+
+  std::ifstream file(argv[2]);
+  if (!file) {
+    std::cerr << "lint: can't open " << argv[2] << '\n';
+    return 2;
+  }
+
+  const auto result = tcl::match::read_points_csv(file);
+  for (const auto& e : result.errors) {
+    std::cerr << "  " << e << '\n';
+  }
+
+  int parse_problems = 0;
+  for (const auto& row : result.rows) {
+    const std::string& src = !row.second.empty() ? row.second : row.first;
+    if (src.empty()) continue;
+    const auto pr = tcl::parser::parse(src);
+    if (!pr.ok()) {
+      ++parse_problems;
+      std::cerr << row.match_id << " pt " << row.pt << " (line " << row.line_no << "):\n"
+                << tcl::lexer::render_diagnostics(src, pr.diagnostics) << "\n\n";
+    }
+  }
+
+  const auto rec = tcl::sema::reconcile_score(result.rows);
+  for (const auto& issue : rec.issues) {
+    std::cerr << issue.match_id << " pt " << issue.pt << " (line " << issue.line_no
+               << "): " << issue.message;
+    if (!issue.expected.empty() || !issue.got.empty()) {
+      std::cerr << " (expected " << issue.expected << ", file says " << issue.got << ")";
+    }
+    std::cerr << '\n';
+  }
+
+  std::cout << result.rows.size() << " rows, " << parse_problems << " parse problems, "
+            << rec.points_checked << " scores checked, " << rec.issues.size()
+            << " score issues\n";
+
+  return (parse_problems == 0 && rec.issues.empty() && result.errors.empty()) ? 0 : 1;
 }
 
 int run_viz(int argc, char** argv) {
@@ -238,6 +288,9 @@ int main(int argc, char** argv) {
   }
   if (cmd == "points") {
     return run_points(argc, argv);
+  }
+  if (cmd == "lint") {
+    return run_lint(argc, argv);
   }
 
   std::cerr << "tcl: unknown command '" << cmd << "'\n";

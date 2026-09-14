@@ -57,8 +57,12 @@ pretty bare. what's there:
   column name (order/extra columns don't matter). `tcl points match.csv` runs
   every point through the parser and reports how many it had something to say
   about
+- sema (`src/sema/`) - replays each row's PtWinner through the scoring engine
+  and checks the result against the file's own Pts column, server-first. this
+  is the actual "does this charted match make sense" check
 - `tcl score aabba` (`--tb`, `--bo5`), `tcl lex 4ffbbf*`, `tcl parse 4ffbbf*`,
-  `tcl viz 4ffbbf*`, `tcl points file.csv` - mostly for eyeballing while building
+  `tcl viz 4ffbbf*`, `tcl points file.csv`, `tcl lint file.csv` - mostly for
+  eyeballing while building
 - notes on the notation in `docs/notation.md`
 
 ## todo
@@ -75,7 +79,7 @@ pretty bare. what's there:
 - [x] error messages that point at the bad character (caret under the offset,
       like a compiler)
 - [x] read a full match csv
-- [ ] the checks (alternation, replay the score)
+- [x] the checks (replay the score - alternation still todo)
 - [ ] flatten to one row per shot
 - [ ] stats
 - [x] the court drawing (schematic for now, no real coordinates)

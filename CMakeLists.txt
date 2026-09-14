@@ -21,6 +21,7 @@ add_library(tcl_core STATIC
   src/viz/court.cpp
   src/match/csv.cpp
   src/match/reader.cpp
+  src/sema/reconcile.cpp
 )
 target_include_directories(tcl_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
