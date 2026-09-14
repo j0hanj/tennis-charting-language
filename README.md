@@ -58,8 +58,11 @@ pretty bare. what's there:
   every point through the parser and reports how many it had something to say
   about
 - sema (`src/sema/`) - replays each row's PtWinner through the scoring engine
-  and checks the result against the file's own Pts column, server-first. this
-  is the actual "does this charted match make sense" check
+  and checks it against the file's own Pts (server-first) and Svr columns -
+  the Svr check doubles as validation of the tiebreak serve rotation against
+  real data. who serves game one is taken from the first row, everything
+  after that is checked, not assumed. this is the actual "does this charted
+  match make sense" check
 - `tcl score aabba` (`--tb`, `--bo5`), `tcl lex 4ffbbf*`, `tcl parse 4ffbbf*`,
   `tcl viz 4ffbbf*`, `tcl points file.csv`, `tcl lint file.csv` - mostly for
   eyeballing while building

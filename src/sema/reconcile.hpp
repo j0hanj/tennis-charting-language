@@ -22,11 +22,14 @@ struct ReconcileResult {
   int points_checked = 0;
 };
 
-// Replays every row's PtWinner through the scoring engine and checks the
-// result against the row's own Pts column, which records the game score
-// server-first, as it stood *before* that row's point was played. Resets to
-// 0-0 whenever match_id changes, so a file holding several matches works in
-// one pass.
+// Replays every row's PtWinner through the scoring engine and checks it
+// against two things the row already claims: the Svr column (who's serving -
+// this also validates the tiebreak serve rotation against real data), and the
+// Pts column, which records the game score server-first, as it stood
+// *before* that row's point was played. Resets to 0-0 whenever match_id
+// changes, so a file holding several matches works in one pass. Who serves
+// game one is taken from the first row of each match (nothing else says it),
+// then checked from there on.
 //
 // Assumes best-of-three with a standard tiebreak. If a match turns out to
 // need different rules (best of five, a different final-set format) the

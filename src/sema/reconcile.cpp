@@ -32,13 +32,15 @@ ReconcileResult reconcile_score(const std::vector<tcl::match::PointRow>& rows) {
   ReconcileResult out;
   std::string current_match;
   Score score;
-  bool skipping = false; // gave up on the current match_id, wait for the next one
+  bool skipping = false;     // gave up on the current match_id, wait for the next one
+  bool seeded_server = false; // whether we've taken who-serves-first from the file yet
 
   for (const auto& row : rows) {
     if (row.match_id != current_match) {
       current_match = row.match_id;
       score = Score{};
       skipping = false;
+      seeded_server = false;
     }
     if (skipping) continue;
 
@@ -55,6 +57,25 @@ ReconcileResult reconcile_score(const std::vector<tcl::match::PointRow>& rows) {
           {row.match_id, row.pt, row.line_no, "", "", "no server on this row, can't check it"});
       skipping = true;
       continue;
+    }
+
+    // nothing in the row data says who serves game one - take it from the
+    // first row of the match and check every point against that from here on
+    if (!seeded_server) {
+      score.server = (row.server == 1) ? Player::kOne : Player::kTwo;
+      seeded_server = true;
+    }
+
+    // who our replay thinks is serving this point - current_server() already
+    // knows about the 1-then-2-at-a-time rotation inside a tiebreak
+    {
+      const int expected_server =
+          tcl::scoring::current_server(score, fmt) == Player::kOne ? 1 : 2;
+      if (row.server != expected_server) {
+        out.issues.push_back({row.match_id, row.pt, row.line_no,
+                              std::to_string(expected_server), std::to_string(row.server),
+                              "server doesn't match"});
+      }
     }
 
     if (!row.pts.empty()) {

@@ -151,9 +151,20 @@ useful. points 1-12 from the start of a real match now lint completely clean:
 
 new `tcl lint file.csv` - runs points plus the score check, one command.
 
+also checked the Svr column while i was in there, since i already had
+`current_server()` sitting around from the tiebreak work. free bonus: this is
+the first time that serve-rotation logic has been checked against a real
+match instead of just my own hand-built test cases, and it held up.
+
+one snag: nothing in the row data says who serves *game one* - a match can
+start with either player serving, it's not always player 1. so the engine now
+seeds who's serving from the very first row of each match and checks
+everything after that against the replay, instead of always assuming player 1
+opens. had to fix a couple existing tests that only worked by accident because
+they never questioned who served first.
+
 ## next
 - the final-set rules per tournament. wimbledon especially - advantage set
   before 2019, then 12-12 tiebreak, then 10-point tiebreak at 6-6 from 2022.
   MatchFormat should hold the rules so step() doesn't turn into a pile of ifs
-- alternation check (does the rally actually go server/returner/server/...)
 - stats off the shot table, once there's an IR to flatten into

@@ -4,6 +4,8 @@
 
 #include <vector>
 
+#include "scoring/score.hpp"
+
 using tcl::match::PointRow;
 using tcl::sema::reconcile_score;
 
@@ -69,6 +71,53 @@ TEST_CASE("case doesn't matter for AD-40 vs Ad-40", "[sema]") {
   CHECK(r.issues.empty());
 }
 
+TEST_CASE("flags a server that doesn't match the replay", "[sema]") {
+  const std::vector<PointRow> rows{
+      row("m", 1, 2, "", 1, 5), // default server is player 1, file says 2
+  };
+  const auto r = reconcile_score(rows);
+  REQUIRE(r.issues.size() == 1);
+  CHECK(r.issues[0].message == "server doesn't match");
+  CHECK(r.issues[0].expected == "1");
+  CHECK(r.issues[0].got == "2");
+  CHECK(r.issues[0].line_no == 5);
+}
+
+TEST_CASE("server rotation through a tiebreak checks out against the real engine", "[sema]") {
+  using tcl::scoring::current_server;
+  using tcl::scoring::MatchFormat;
+  using tcl::scoring::Player;
+  using tcl::scoring::Score;
+  using tcl::scoring::step;
+
+  const auto fmt = MatchFormat::best_of_three_with_tiebreak();
+  Score s;
+  std::vector<PointRow> rows;
+  int pt = 0;
+  auto play = [&](Player winner) {
+    ++pt;
+    const int server = current_server(s, fmt) == Player::kOne ? 1 : 2;
+    rows.push_back(row("m", pt, server, "", winner == Player::kOne ? 1 : 2));
+    s = step(s, winner, fmt);
+  };
+
+  // 12 alternating-winner games reach 6-6 without either side winning the set
+  for (int g = 0; g < 12; ++g) {
+    for (int i = 0; i < 4; ++i) play(g % 2 == 0 ? Player::kOne : Player::kTwo);
+  }
+  // a handful of tiebreak points - this is what actually exercises the
+  // 1-then-2-at-a-time serve rotation
+  for (int i = 0; i < 5; ++i) play(i % 2 == 0 ? Player::kOne : Player::kTwo);
+
+  CHECK(reconcile_score(rows).issues.empty());
+
+  // corrupt one server on purpose and make sure it gets caught
+  rows.back().server = (rows.back().server == 1) ? 2 : 1;
+  const auto r = reconcile_score(rows);
+  REQUIRE(r.issues.size() == 1);
+  CHECK(r.issues[0].message == "server doesn't match");
+}
+
 TEST_CASE("a missing PtWinner stops that match without crashing", "[sema]") {
   const std::vector<PointRow> rows{
       row("m", 1, 1, "0-0", 0), // no winner recorded
@@ -90,15 +139,19 @@ TEST_CASE("a new match_id resets the score", "[sema]") {
 
 TEST_CASE("rows past a finished match get one issue, not one per row", "[sema]") {
   std::vector<PointRow> rows;
-  std::string set;
-  // alternate games so nobody wins the set early
+  int server = 1;
+  // server actually alternates every game, so this has to track that too, now
+  // that reconcile checks Svr as well as Pts
   auto win_game = [&](int winner) {
-    for (int i = 0; i < 4; ++i) rows.push_back(row("m", 0, 1, "", winner));
+    for (int i = 0; i < 4; ++i) rows.push_back(row("m", 0, server, "", winner));
+    server = (server == 1) ? 2 : 1;
   };
   // two 6-0 sets: P1 wins every game, straightforwardly finishes 2-0
   for (int s = 0; s < 2; ++s)
     for (int g = 0; g < 6; ++g) win_game(1);
-  rows.push_back(row("m", 99, 1, "0-0", 1, 7)); // one row too many
+  rows.push_back(row("m", 99, 1, "0-0", 1, 7)); // one row too many - server here
+                                                 // is never checked, match is
+                                                 // already over by this point
 
   const auto r = reconcile_score(rows);
   REQUIRE(r.issues.size() == 1);
