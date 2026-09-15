@@ -10,6 +10,7 @@
 #include <iostream>
 #include <string>
 #include <string_view>
+#include <vector>
 
 #include "lexer/lexer.hpp"
 #include "lexer/render.hpp"
@@ -38,6 +39,8 @@ int print_usage(std::ostream& os) {
         "                           run every point through the parser\n"
         "  lint <file.csv>          points, plus replay PtWinner and check the\n"
         "                           score against the file's own Pts column\n"
+        "  matchviz <file.csv> [-o file]\n"
+        "                           draw every shot in the file on one court\n"
         "  --version, -v            print version\n"
         "  --help, -h               this message\n"
         "\n"
@@ -158,6 +161,65 @@ int run_viz(int argc, char** argv) {
     }
     file << svg;
     std::cerr << "wrote " << out_path << '\n';
+  }
+  return 0;
+}
+
+int run_matchviz(int argc, char** argv) {
+  std::string in_path;
+  std::string out_path;
+  for (int i = 2; i < argc; ++i) {
+    const std::string_view a = argv[i];
+    if ((a == "-o" || a == "--out") && i + 1 < argc) {
+      out_path = argv[++i];
+    } else if (in_path.empty()) {
+      in_path = argv[i];
+    }
+  }
+
+  if (in_path.empty()) {
+    std::cerr << "matchviz: give me a csv file, e.g. tcl matchviz match.csv -o shots.svg\n";
+    return 2;
+  }
+
+  std::ifstream file(in_path);
+  if (!file) {
+    std::cerr << "matchviz: can't open " << in_path << '\n';
+    return 2;
+  }
+
+  const auto result = tcl::match::read_points_csv(file);
+  for (const auto& e : result.errors) {
+    std::cerr << "  " << e << '\n';
+  }
+
+  std::vector<tcl::ast::Point> points;
+  for (const auto& row : result.rows) {
+    const std::string& src = !row.second.empty() ? row.second : row.first;
+    if (src.empty()) continue;
+    if (auto pr = tcl::parser::parse(src); pr.point) points.push_back(std::move(*pr.point));
+  }
+
+  if (points.empty()) {
+    std::cerr << "matchviz: nothing parsed out of " << in_path << '\n';
+    return 1;
+  }
+
+  const std::string title =
+      result.rows.empty() || result.rows.front().match_id.empty()
+          ? in_path
+          : result.rows.front().match_id;
+  const std::string svg = tcl::viz::render_match_svg(points, title);
+  if (out_path.empty()) {
+    std::cout << svg;
+  } else {
+    std::ofstream out(out_path);
+    if (!out) {
+      std::cerr << "matchviz: can't write " << out_path << '\n';
+      return 2;
+    }
+    out << svg;
+    std::cerr << "wrote " << out_path << " from " << points.size() << " points\n";
   }
   return 0;
 }
@@ -285,6 +347,9 @@ int main(int argc, char** argv) {
   }
   if (cmd == "viz") {
     return run_viz(argc, argv);
+  }
+  if (cmd == "matchviz") {
+    return run_matchviz(argc, argv);
   }
   if (cmd == "points") {
     return run_points(argc, argv);

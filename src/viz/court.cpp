@@ -123,6 +123,53 @@ std::vector<Pt> ball_path(const tcl::ast::Point& p, const Court& c) {
   return pts;
 }
 
+// Everything render_svg and render_match_svg both need: the ball path plus
+// where the point actually ended up and how.
+struct PointRender {
+  std::vector<Pt> pts;
+  bool is_winner = true;
+  std::string tag = "in play";
+};
+
+PointRender compute_point_render(const tcl::ast::Point& point, const Court& c) {
+  PointRender out;
+  out.pts = ball_path(point, c);
+  if (!point.outcome) return out;
+
+  using tcl::ast::Ender;
+  using tcl::ast::ErrorLoc;
+  const auto& o = *point.outcome;
+  out.is_winner = (o.ender == Ender::kWinner);
+  out.tag = tcl::ast::ender_name(o.ender);
+  if (out.is_winner) return out;
+
+  const Pt last = out.pts.back();
+  const ErrorLoc where = o.where.value_or(ErrorLoc::kNet);
+  Pt e = last;
+  const bool right_side = last.x > c.center_x();
+  const bool top_side = last.y < c.net_y();
+  switch (where) {
+    case ErrorLoc::kNet:
+      e = {last.x, c.net_y()};
+      break;
+    case ErrorLoc::kWide:
+      e = {right_side ? c.x0 + c.w + 16.0 : c.x0 - 16.0, last.y};
+      break;
+    case ErrorLoc::kDeep:
+      e = {last.x, top_side ? c.y0 - 16.0 : c.y0 + c.h + 16.0};
+      break;
+    case ErrorLoc::kWideDeep:
+      e = {right_side ? c.x0 + c.w + 16.0 : c.x0 - 16.0,
+           top_side ? c.y0 - 16.0 : c.y0 + c.h + 16.0};
+      break;
+  }
+  out.tag += " (";
+  out.tag += tcl::ast::error_loc_name(where);
+  out.tag += ")";
+  out.pts.push_back(e);
+  return out;
+}
+
 }  // namespace
 
 std::string render_svg(const tcl::ast::Point& point, std::string_view source) {
@@ -130,45 +177,10 @@ std::string render_svg(const tcl::ast::Point& point, std::string_view source) {
   const double svg_w = kCourtW + 2 * kMargin;
   const double svg_h = kCourtH + 2 * kMargin + kTitleBand;
 
-  std::vector<Pt> pts = ball_path(point, c);
-
-  // where the ball ended up
-  bool is_winner = true;
-  std::string tag = "in play";
-  if (point.outcome) {
-    using tcl::ast::Ender;
-    using tcl::ast::ErrorLoc;
-    const auto& o = *point.outcome;
-    is_winner = (o.ender == Ender::kWinner);
-    tag = tcl::ast::ender_name(o.ender);
-
-    if (!is_winner) {
-      const Pt last = pts.back();
-      const ErrorLoc where = o.where.value_or(ErrorLoc::kNet);
-      Pt e = last;
-      const bool right_side = last.x > c.center_x();
-      const bool top_side = last.y < c.net_y();
-      switch (where) {
-        case ErrorLoc::kNet:
-          e = {last.x, c.net_y()};
-          break;
-        case ErrorLoc::kWide:
-          e = {right_side ? c.x0 + c.w + 16.0 : c.x0 - 16.0, last.y};
-          break;
-        case ErrorLoc::kDeep:
-          e = {last.x, top_side ? c.y0 - 16.0 : c.y0 + c.h + 16.0};
-          break;
-        case ErrorLoc::kWideDeep:
-          e = {right_side ? c.x0 + c.w + 16.0 : c.x0 - 16.0,
-               top_side ? c.y0 - 16.0 : c.y0 + c.h + 16.0};
-          break;
-      }
-      tag += " (";
-      tag += tcl::ast::error_loc_name(where);
-      tag += ")";
-      pts.push_back(e);
-    }
-  }
+  const PointRender pr = compute_point_render(point, c);
+  const std::vector<Pt>& pts = pr.pts;
+  const bool is_winner = pr.is_winner;
+  const std::string& tag = pr.tag;
 
   std::ostringstream s;
   s << "<svg xmlns='http://www.w3.org/2000/svg' width='" << f(svg_w)
@@ -215,6 +227,80 @@ std::string render_svg(const tcl::ast::Point& point, std::string_view source) {
       << f(end.x + 4) << ' ' << f(end.y + 4) << 'M' << f(end.x + 4) << ' '
       << f(end.y - 4) << 'L' << f(end.x - 4) << ' ' << f(end.y + 4)
       << "' stroke='#20242b' stroke-width='1.5'/>\n";
+  }
+
+  s << "</svg>\n";
+  return s.str();
+}
+
+std::string render_match_svg(const std::vector<tcl::ast::Point>& points, std::string_view title) {
+  const Court c;
+  const double svg_w = kCourtW + 2 * kMargin;
+  const double svg_h = kCourtH + 2 * kMargin + kTitleBand;
+
+  std::vector<PointRender> renders;
+  renders.reserve(points.size());
+  int winners = 0;
+  int errors = 0;
+  for (const auto& p : points) {
+    renders.push_back(compute_point_render(p, c));
+    if (renders.back().is_winner) {
+      ++winners;
+    } else {
+      ++errors;
+    }
+  }
+
+  // the svg is only ~310px wide - a long match_id or file path would run
+  // straight off the edge, so clip it
+  constexpr std::size_t kMaxTitle = 30;
+  std::string shown_title(title);
+  if (shown_title.size() > kMaxTitle) {
+    shown_title = shown_title.substr(0, kMaxTitle - 1) + "…";
+  }
+
+  std::ostringstream s;
+  s << "<svg xmlns='http://www.w3.org/2000/svg' width='" << f(svg_w)
+    << "' height='" << f(svg_h) << "' viewBox='0 0 " << f(svg_w) << ' '
+    << f(svg_h) << "' font-family='ui-monospace, Menlo, Consolas, monospace'>\n";
+  s << "  <rect width='100%' height='100%' fill='#20242b'/>\n";
+
+  s << "  <text x='" << f(kMargin) << "' y='22' fill='#f4f4f4' font-size='12'>" << shown_title
+    << "</text>\n";
+  s << "  <text x='" << f(kMargin) << "' y='" << f(kMargin - 4) << "' fill='#9aa4b2'"
+    << " font-size='11'>" << points.size() << " points, " << winners << " winners, " << errors
+    << " errors</text>\n";
+
+  draw_court(s, c);
+
+  // the direction/depth codes only give ~9 rough spots per side, so with
+  // hundreds of shots stacking exactly on top of each other reads as a grid,
+  // not a shot chart. nudge each dot a little - deterministic, seeded off its
+  // own point/shot index, so the same file always draws the same picture
+  auto jitter = [](std::size_t seed) {
+    seed ^= seed << 13;
+    seed ^= seed >> 7;
+    seed ^= seed << 17;
+    return static_cast<double>(seed % 2000) / 1000.0 - 1.0; // -1..1
+  };
+
+  // every bounce from every point, translucent so it builds up where shots
+  // actually cluster - the closest thing to a real shot chart this schematic
+  // model can produce (no ball tracking, just what the notation implies)
+  for (std::size_t pi = 0; pi < renders.size(); ++pi) {
+    const auto& pr = renders[pi];
+    for (std::size_t i = 1; i + 1 < pr.pts.size(); ++i) {
+      const double jx = jitter(pi * 131 + i * 7) * 7.0;
+      const double jy = jitter(pi * 131 + i * 7 + 91) * 7.0;
+      s << "  <circle cx='" << f(pr.pts[i].x + jx) << "' cy='" << f(pr.pts[i].y + jy)
+        << "' r='2.5' fill='#f4f4f4' fill-opacity='0.16'/>\n";
+    }
+    const double ejx = jitter(pi * 131 + 991) * 5.0;
+    const double ejy = jitter(pi * 131 + 997) * 5.0;
+    const Pt end{pr.pts.back().x + ejx, pr.pts.back().y + ejy};
+    const char* color = pr.is_winner ? "#f4c542" : "#e5484d";
+    s << "  <circle cx='" << f(end.x) << "' cy='" << f(end.y) << "' r='3.5' fill='" << color
+      << "' fill-opacity='0.55'/>\n";
   }
 
   s << "</svg>\n";

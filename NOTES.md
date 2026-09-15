@@ -163,6 +163,29 @@ everything after that against the replay, instead of always assuming player 1
 opens. had to fix a couple existing tests that only worked by accident because
 they never questioned who served first.
 
+## day 11
+whole-match shot chart. `render_match_svg()` reuses everything from the single
+point drawer (pulled the shared bit into `compute_point_render()` so both
+functions use it) but plots every point's bounces on one court instead of
+drawing a path per point, translucent so it builds up where shots cluster.
+`tcl matchviz file.csv -o shots.svg`.
+
+downloaded a real full match (141 points) to try it on. first version looked
+bad - the direction/depth codes only give about 9 rough spots per side, so
+hundreds of shots landing in the same zone just stacked into a rigid dot grid,
+not a shot chart. fixed it by nudging every dot with a small deterministic
+jitter (seeded off the point/shot index, so the same file always draws the
+same picture, it's not random each run). looks a lot more like a real heatmap
+now instead of a checkerboard.
+
+had to fix the title too - a match_id can be way longer than the ~310px wide
+court, first render just ran the text straight off the edge. clips long
+titles with an ellipsis now.
+
+double checked the refactor didn't change the old single-point output -
+diffed the four svgs already in docs/examples against freshly generated ones,
+byte-identical.
+
 ## next
 - the final-set rules per tournament. wimbledon especially - advantage set
   before 2019, then 12-12 tiebreak, then 10-point tiebreak at 6-6 from 2022.

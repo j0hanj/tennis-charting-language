@@ -12,9 +12,11 @@ one string:
 
 serve out wide, forehand, forehand, backhand, backhand, forehand winner.
 
-`tcl viz` draws it (rough - the notation only gives loose directions):
+`tcl viz` draws one point, `tcl matchviz` plots every shot from a whole match
+on one court (rough - the notation only gives loose directions, this is a feel
+for where things happened, not real tracking):
 
-<img src="docs/examples/long-rally.svg" width="260" alt="a charted point drawn on a court">
+<img src="docs/examples/match-shot-chart.svg" width="280" alt="every shot from a real charted match, plotted on one court">
 
 more in [docs/examples](docs/examples).
 
@@ -51,8 +53,10 @@ pretty bare. what's there:
     4fQf*
       ^ don't recognize 'Q'
   ```
-- viz (`src/viz/`) - `tcl viz "4ffbbf*" -o point.svg` draws the point on a court
-  from the parsed shots. schematic, positions are approximate
+- viz (`src/viz/`) - `tcl viz "4ffbbf*" -o point.svg` draws one point;
+  `tcl matchviz match.csv -o shots.svg` plots every shot from a whole file on
+  one court, jittered so hundreds of shots landing in the same rough zone
+  don't just stack into a grid. schematic, positions are approximate
 - csv reader (`src/match/`) - reads a match charting project "-points" csv by
   column name (order/extra columns don't matter). `tcl points match.csv` runs
   every point through the parser and reports how many it had something to say
@@ -64,7 +68,8 @@ pretty bare. what's there:
   after that is checked, not assumed. this is the actual "does this charted
   match make sense" check
 - `tcl score aabba` (`--tb`, `--bo5`), `tcl lex 4ffbbf*`, `tcl parse 4ffbbf*`,
-  `tcl viz 4ffbbf*`, `tcl points file.csv`, `tcl lint file.csv` - mostly for
+  `tcl viz 4ffbbf*`, `tcl points file.csv`, `tcl lint file.csv`,
+  `tcl matchviz file.csv` - mostly for
   eyeballing while building
 - notes on the notation in `docs/notation.md`
 
@@ -86,6 +91,7 @@ pretty bare. what's there:
 - [ ] flatten to one row per shot
 - [ ] stats
 - [x] the court drawing (schematic for now, no real coordinates)
+- [x] whole-match shot chart (`tcl matchviz`)
 
 ## build
 
