@@ -24,6 +24,8 @@ const char* error_loc_name(ErrorLoc l) {
 std::string to_string(const Point& p) {
   std::string s = "serve dir=";
   s += p.serve.direction ? std::to_string(*p.serve.direction) : "?";
+  if (p.serve.serve_and_volley) s += " serve-and-volley";
+  if (p.serve.lets > 0) s += " lets=" + std::to_string(p.serve.lets);
   s += '\n';
 
   for (const auto& shot : p.rally) {
@@ -38,7 +40,11 @@ std::string to_string(const Point& p) {
     s += '\n';
   }
 
-  if (p.outcome) {
+  if (p.fault) {
+    s += "fault ";
+    s += error_loc_name(*p.fault);
+    s += '\n';
+  } else if (p.outcome) {
     s += "end ";
     s += ender_name(p.outcome->ender);
     if (p.outcome->where) {

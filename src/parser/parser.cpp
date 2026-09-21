@@ -1,5 +1,6 @@
 #include "parser/parser.hpp"
 
+#include <algorithm>
 #include <string>
 
 #include "lexer/lexer.hpp"
@@ -24,6 +25,10 @@ class Cursor {
       : tokens_(std::move(tokens)), diags_(diags) {}
 
   const Token& peek() const { return tokens_[pos_]; }
+  // look n tokens ahead, stopping at the trailing kEnd
+  const Token& peek_at(std::size_t n) const {
+    return tokens_[std::min(pos_ + n, tokens_.size() - 1)];
+  }
   const Token& advance() { return tokens_[pos_++]; }
   bool at(Kind k) const { return peek().kind == k; }
   bool done() const { return at(Kind::kEnd); }
@@ -65,21 +70,22 @@ Shot parse_shot(Cursor& c) {
   return shot;
 }
 
+std::optional<ErrorLoc> error_loc_from(char ch) {
+  switch (ch) {
+    case 'n': return ErrorLoc::kNet;
+    case 'w': return ErrorLoc::kWide;
+    case 'd': return ErrorLoc::kDeep;
+    case 'x': return ErrorLoc::kWideDeep;
+    default: return std::nullopt;
+  }
+}
+
 std::optional<tcl::ast::Outcome> parse_ending(Cursor& c) {
   // real charted points put the error location right before the marker
   // ("6f18f3d@", not "...@d" like the doc examples I wrote first suggested -
   // found by running this against actual match charting project rows)
   std::optional<ErrorLoc> where;
-  if (c.at(Kind::kErrorLoc)) {
-    const Token& loc = c.advance();
-    switch (loc.text[0]) {
-      case 'n': where = ErrorLoc::kNet; break;
-      case 'w': where = ErrorLoc::kWide; break;
-      case 'd': where = ErrorLoc::kDeep; break;
-      case 'x': where = ErrorLoc::kWideDeep; break;
-      default: break;
-    }
-  }
+  if (c.at(Kind::kErrorLoc)) where = error_loc_from(c.advance().text[0]);
 
   if (!c.at(Kind::kEndMarker)) {
     c.error(c.peek().offset, "point doesn't end with * @ or #");
@@ -116,11 +122,23 @@ Parsed parse(std::string_view src) {
   Cursor c(std::move(tokens), result.diagnostics);
   Point point;
 
+  // "c4b27f3*" - a let (or two) before the serve that got replayed
+  while (c.at(Kind::kLet)) {
+    ++point.serve.lets;
+    c.advance();
+  }
+
   // serve: a leading direction digit
   if (c.at(Kind::kDigit)) {
     const Token& t = c.advance();
     point.serve.direction = t.value;
     point.serve.offset = t.offset;
+    // "4+b1v1n#" - the server followed the serve in to the net. it's the same
+    // symbol as the approach marker, it just sits right after the serve digit
+    if (c.at(Kind::kPosition) && c.peek().text[0] == '+') {
+      point.serve.serve_and_volley = true;
+      c.advance();
+    }
   } else {
     c.error(c.peek().offset, "expected a serve direction (4, 5 or 6)");
   }
@@ -130,8 +148,12 @@ Parsed parse(std::string_view src) {
     point.rally.push_back(parse_shot(c));
   }
 
-  // ending
-  point.outcome = parse_ending(c);
+  // a missed serve is just "<dir><fault code>" - no shots, no ending marker
+  if (point.rally.empty() && c.at(Kind::kErrorLoc) && c.peek_at(1).kind == Kind::kEnd) {
+    point.fault = error_loc_from(c.advance().text[0]);
+  } else {
+    point.outcome = parse_ending(c);
+  }
 
   // anything left over
   if (!c.done()) {

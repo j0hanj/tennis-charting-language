@@ -31,11 +31,12 @@ struct ReconcileResult {
 // game one is taken from the first row of each match (nothing else says it),
 // then checked from there on.
 //
-// Assumes best-of-three with a standard tiebreak. If a match turns out to
-// need different rules (best of five, a different final-set format) the
-// replay will look "finished" earlier than the file's remaining rows -
-// reconciliation stops there with one issue instead of flooding every row
-// after it with nonsense.
+// The file doesn't say how many sets a match was, so each match is replayed as
+// best-of-three with a standard tiebreak first, and if that doesn't fit it's
+// tried as best-of-five too, keeping whichever leaves fewer issues. Anything
+// stranger (a different final-set rule, say) will still show up as issues -
+// reconciliation stops at the first row it can't make sense of instead of
+// flooding every row after it with nonsense.
 ReconcileResult reconcile_score(const std::vector<tcl::match::PointRow>& rows);
 
 }  // namespace tcl::sema

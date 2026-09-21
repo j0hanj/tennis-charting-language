@@ -134,6 +134,13 @@ struct PointRender {
 PointRender compute_point_render(const tcl::ast::Point& point, const Court& c) {
   PointRender out;
   out.pts = ball_path(point, c);
+
+  // a missed serve: the path stops where it landed, marked as a miss
+  if (point.fault) {
+    out.is_winner = false;
+    out.tag = std::string("fault (") + tcl::ast::error_loc_name(*point.fault) + ")";
+    return out;
+  }
   if (!point.outcome) return out;
 
   using tcl::ast::Ender;

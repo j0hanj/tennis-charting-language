@@ -97,7 +97,24 @@ TEST_CASE("a longer rally from the notation doc scans clean", "[lexer]") {
 
 TEST_CASE("kind_name covers every kind", "[lexer]") {
   for (auto k : {Kind::kShotType, Kind::kDigit, Kind::kPosition, Kind::kEndMarker,
-                 Kind::kErrorLoc, Kind::kUnknown, Kind::kEnd}) {
+                 Kind::kErrorLoc, Kind::kLet, Kind::kUnknown, Kind::kEnd}) {
     CHECK(std::string(kind_name(k)) != "?");
   }
+}
+
+TEST_CASE("lob and volley variants are shots too", "[lexer]") {
+  // m = backhand lob (l is the forehand one), j and k show up as rally shots
+  // all through the real data
+  CHECK(kinds("lmjk") == std::vector<Kind>{Kind::kShotType, Kind::kShotType, Kind::kShotType,
+                                          Kind::kShotType});
+  CHECK(lex("lmjk").ok());
+
+  // t (trick shot) and q (shot type not known) are rally shots too
+  CHECK(kinds("tq") == std::vector<Kind>{Kind::kShotType, Kind::kShotType});
+}
+
+TEST_CASE("c is a let, not a shot", "[lexer]") {
+  CHECK(kinds("cc4*") == std::vector<Kind>{Kind::kLet, Kind::kLet, Kind::kDigit,
+                                          Kind::kEndMarker});
+  CHECK(lex("cc4*").ok());
 }

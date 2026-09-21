@@ -14,11 +14,12 @@
 namespace tcl::lexer {
 
 enum class Kind {
-  kShotType,  // f b r s v z o p l u y h i
+  kShotType,  // f b r s v z o p l m u y h i j k t q
   kDigit,     // 1-9
   kPosition,  // + (approach)  - (at net)  = (at baseline)
   kEndMarker, // * (winner)  @ (unforced)  # (forced)
   kErrorLoc,  // n (net)  w (wide)  d (deep)  x (wide and deep)
+  kLet,       // c - a let on the serve, sits in front of the serve digit
   kUnknown,   // a character we don't know
   kEnd,       // end of input
 };

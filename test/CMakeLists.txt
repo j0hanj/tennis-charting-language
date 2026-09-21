@@ -16,6 +16,8 @@ add_executable(tcl_tests
   unit/viz_test.cpp
   unit/match_reader_test.cpp
   unit/reconcile_test.cpp
+  unit/ir_test.cpp
+  unit/stats_test.cpp
 )
 target_link_libraries(tcl_tests PRIVATE tcl_core Catch2::Catch2WithMain)
 

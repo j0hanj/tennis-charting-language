@@ -21,10 +21,14 @@ own. it ends up looking like a compiler front end.
 - `ast/` - the node types for a parsed point, just plain structs
 - `parser/` - hand written recursive descent, one point at a time. no yacc/antlr,
   the whole point is to write it myself
-- `sema/` - the checks: players alternate, only one ending marker, score matches
-  the record. fills in who won each point
-- `ir/` - turn a checked point into flat rows
-- `analytics/` - the stats, all computed off the flat rows
+- `sema/` - the checks. replays the score and the server against the file's own
+  columns, and checks the shot string agrees with PtWinner about who won
+- `match/` - reads the csv. puts rows in point order per match, because the real
+  files aren't always in order
+- `ir/` - flatten every point into a summary plus one row per shot (who hit it,
+  type, direction, depth, how the point ended). `tcl shots` dumps it as csv
+- `analytics/` - the stats, all computed off the flat rows. names come out of
+  the match_id
 - `viz/` - map shots to court coordinates, write an svg. no image library
 - `cli/` - arg parsing and glue
 

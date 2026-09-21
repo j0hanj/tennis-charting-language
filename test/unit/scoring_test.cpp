@@ -205,8 +205,10 @@ TEST_CASE("without has_tiebreak the default still just keeps playing", "[scoring
 
 TEST_CASE("step never produces an invalid state over a long random-ish sequence", "[scoring]") {
   Score s;
-  // Deterministic pseudo-pattern; enough games to finish a best-of-three.
-  const std::string pattern = "ABBABAABBAABABBAABABABBABAABBA";
+  // Deterministic pseudo-pattern, A wins two points in three. it has to lean
+  // one way - an even split can sit at deuce / level games forever in an
+  // advantage set and never finish
+  const std::string pattern = "AABAABABAABAABAAB";
   int guard = 0;
   while (!s.finished && guard < 5000) {
     s = step(s, pattern[static_cast<std::size_t>(guard) % pattern.size()] == 'A'

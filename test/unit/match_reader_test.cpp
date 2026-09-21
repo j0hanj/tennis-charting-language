@@ -74,3 +74,40 @@ TEST_CASE("blank lines are skipped", "[match]") {
   const auto r = read_points_csv(in);
   CHECK(r.rows.size() == 2);
 }
+
+TEST_CASE("rows come back in point order within each match", "[match]") {
+  // the real files aren't always in order - a chunk of later points can sit
+  // ahead of the start of the match
+  std::istringstream in(
+      "match_id,Pt,1st\n"
+      "m1,3,c\n"
+      "m1,1,a\n"
+      "m2,2,x\n"
+      "m1,2,b\n"
+      "m2,1,y\n");
+  const auto r = read_points_csv(in);
+  REQUIRE(r.rows.size() == 5);
+
+  const std::vector<std::string> expected{"a", "b", "c", "y", "x"}; // m1 first, then m2
+  for (std::size_t i = 0; i < expected.size(); ++i) CHECK(r.rows[i].first == expected[i]);
+
+  CHECK(r.matches_reordered == 2);
+  CHECK(r.rows[0].line_no == 3); // "a" was on line 3 of the file, not line 2
+}
+
+TEST_CASE("a file already in order isn't touched", "[match]") {
+  std::istringstream in("match_id,Pt,1st\nm1,1,a\nm1,2,b\nm2,1,c\n");
+  const auto r = read_points_csv(in);
+  CHECK(r.matches_reordered == 0);
+  CHECK(r.rows[0].first == "a");
+  CHECK(r.rows[2].first == "c");
+}
+
+TEST_CASE("a match with a missing Pt keeps the file's order", "[match]") {
+  std::istringstream in("match_id,Pt,1st\nm1,2,b\nm1,,a\n");
+  const auto r = read_points_csv(in);
+  REQUIRE(r.rows.size() == 2);
+  CHECK(r.rows[0].first == "b"); // nothing safe to sort by, so leave it
+  CHECK(r.rows[1].first == "a");
+  CHECK(r.matches_reordered == 0);
+}

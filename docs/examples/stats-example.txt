@@ -1,0 +1,36 @@
+Jesper De Jong vs Michael Zheng  (141 points)
+
+                        Jesper De Jong  Michael Zheng
+  points won            64              77
+  first serve in        60%             56%
+  won on serve          58%             70%
+  aces                  6               3
+  double faults         4               2
+  winners               16              25
+  unforced errors       21              19
+  forced errors         23              19
+
+rally length (shots per point, serve = 1)
+    1  ##################             13
+    2  ############################   20
+    3  ############################## 22
+    4  ##################             13
+    5  ########################       17
+    6  ###########                    8
+    7  ###########                    8
+    8  ##############                 10
+    9  ##########                     7
+  10+  ########################       17
+  avg 5.4 shots, longest 29
+
+how points end, by rally length
+  shots    points  winners  unforced  forced  ue rate
+  1-3          55       19        15      18      27%
+  4-6          38       11        11      16      29%
+  7-9          25       12         6       7      24%
+  10+          17        8         8       1      47%
+
+serve direction (server's win rate)
+  wide (4)    46 pts   70% won  1 aces
+  body (5)     7 pts   86% won  0 aces
+  T (6)       82 pts   62% won  8 aces

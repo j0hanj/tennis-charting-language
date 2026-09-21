@@ -73,7 +73,8 @@ TEST_CASE("case doesn't matter for AD-40 vs Ad-40", "[sema]") {
 
 TEST_CASE("flags a server that doesn't match the replay", "[sema]") {
   const std::vector<PointRow> rows{
-      row("m", 1, 2, "", 1, 5), // default server is player 1, file says 2
+      row("m", 1, 1, "", 1),    // first row seeds it: player 1 serves
+      row("m", 2, 2, "", 1, 5), // still mid-game, so the server can't have changed
   };
   const auto r = reconcile_score(rows);
   REQUIRE(r.issues.size() == 1);
@@ -146,8 +147,9 @@ TEST_CASE("rows past a finished match get one issue, not one per row", "[sema]")
     for (int i = 0; i < 4; ++i) rows.push_back(row("m", 0, server, "", winner));
     server = (server == 1) ? 2 : 1;
   };
-  // two 6-0 sets: P1 wins every game, straightforwardly finishes 2-0
-  for (int s = 0; s < 2; ++s)
+  // three 6-0 sets: over under best of three (after two) *and* best of five,
+  // so falling back to best of five can't rescue the extra row below
+  for (int s = 0; s < 3; ++s)
     for (int g = 0; g < 6; ++g) win_game(1);
   rows.push_back(row("m", 99, 1, "0-0", 1, 7)); // one row too many - server here
                                                  // is never checked, match is
@@ -156,4 +158,20 @@ TEST_CASE("rows past a finished match get one issue, not one per row", "[sema]")
   const auto r = reconcile_score(rows);
   REQUIRE(r.issues.size() == 1);
   CHECK(r.issues[0].message.find("finished") != std::string::npos);
+}
+
+TEST_CASE("a match that only fits best of five is read as best of five", "[sema]") {
+  std::vector<PointRow> rows;
+  int server = 1;
+  int pt = 0;
+  auto win_game = [&](int winner) {
+    for (int i = 0; i < 4; ++i) rows.push_back(row("m", ++pt, server, "", winner));
+    server = (server == 1) ? 2 : 1;
+  };
+  // player 1 wins three 6-0 sets. as best of three that match ends after two
+  for (int set = 0; set < 3; ++set)
+    for (int g = 0; g < 6; ++g) win_game(1);
+
+  const auto r = reconcile_score(rows);
+  CHECK(r.issues.empty());
 }

@@ -85,3 +85,10 @@ TEST_CASE("render_match_svg on an empty match still makes a valid svg", "[viz]")
   CHECK(svg.find("</svg>") != std::string::npos);
   CHECK(svg.find("0 points") != std::string::npos);
 }
+
+TEST_CASE("a missed serve is drawn as a fault, not a winner", "[viz]") {
+  const std::string svg = svg_for("6d");
+  CHECK(svg.find("fault (deep)") != std::string::npos);
+  CHECK(svg.find("#e5484d") != std::string::npos);  // red end marker
+  CHECK(svg.find("fill='#f4c542'") == std::string::npos);  // no gold winner dot (the path stroke is gold either way)
+}

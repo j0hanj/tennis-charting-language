@@ -22,6 +22,8 @@ const char* error_loc_name(ErrorLoc l);
 
 struct Serve {
   std::optional<int> direction; // 4 wide, 5 body, 6 down the T
+  bool serve_and_volley = false; // a "+" right after the direction ("4+b1v...")
+  int lets = 0;                  // leading "c"s - a let before the serve that counted
   std::size_t offset = 0;
 };
 
@@ -43,6 +45,9 @@ struct Point {
   Serve serve;
   std::vector<Shot> rally;
   std::optional<Outcome> outcome; // missing if the string was cut short
+  // a serve that missed: just a direction and where it went ("4w", "6n"), no
+  // ending marker. a second one of these in a row is a double fault
+  std::optional<ErrorLoc> fault;
 };
 
 // A readable dump of the tree, one node per line. Used by `tcl parse` and tests.

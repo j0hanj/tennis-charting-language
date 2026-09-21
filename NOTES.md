@@ -186,7 +186,60 @@ double checked the refactor didn't change the old single-point output -
 diffed the four svgs already in docs/examples against freshly generated ones,
 byte-identical.
 
+## day 12
+big one. flattened a match into one row per shot (`src/ir/`) and built the stats
+on top (`src/analytics/`): `tcl stats match.csv` prints serve numbers, rally
+length histogram, how points end by rally length, serve direction win rates.
+`tcl shots` dumps the flat table as csv.
+
+to get who-hit-what i just alternate: server serves, returner hits shot 2, and
+so on. which gave me a second check for free - the shot string and the PtWinner
+column are two separate records of who won the point. an ace should go to the
+server, a netted forehand should go to whoever *didn't* hit it. if they
+disagree one of them is a charting mistake. that's the new part of `tcl lint`.
+
+then i ran it on the whole 2020s file for the first time (547k points, 3,337
+matches). 2 seconds, no crashes, and it found a bunch of stuff:
+
+- **the file isn't always in point order.** ~600 matches have a chunk of later
+  points sitting *before* the start (one had points 92-141 first, then 1-91),
+  probably charted in two sessions. replaying rows as-is scored nonsense.
+  reader sorts by Pt within each match now, line_no still points at the real
+  line. that one bug was making a full match show 100 score errors, now 0.
+- **the letters i was dropping were shots.** first pass had 1,221 points where
+  the shot string disagreed with PtWinner. grepped what the most common
+  "unrecognized" letters were actually doing: `m` is the backhand lob (it's in
+  the quick start guide), `j`, `k`, `t`, `q` all show up as rally shots with a
+  direction like any other, and dropping them shifted who-hit-what by one.
+  added them -> 60 disagreements across all 547k rows. those 60 are probably
+  real charting mistakes, want to go look at some.
+- `c` at the very start (`cc4f18f...`) is a let on the serve, one per c.
+- `+` right after the serve digit is serve-and-volley (~23k points). before, it
+  cut the rally off and those points parsed as having no shots.
+- a serve that missed (`4w`, `6d`) is valid, it's just direction + fault code
+  with no ending marker. lint was calling every fault an error.
+- an error marker on a bare serve (`4#`) is the *returner's* error, not the
+  server's. that one i had backwards at first.
+- most Grand Slam matches are best of five and were getting replayed as best of
+  three. each match tries bo3 first and falls back to bo5 if it fits better.
+
+where it lands: **3,280 of 3,337 matches (98%) replay perfectly** - score and
+server both, start to finish. parse problems 64,790 -> 31,320.
+
+the 57 that don't are almost all NextGen Finals, which has its own scoring
+(first to 4 games, no-ad) - that's exactly what MatchFormat is for, so that's
+the next thing.
+
+also: never actually ran the test suite until today. no cmake here, so i wrote
+a throwaway catch2 stand-in and ran the real test files against it. found two
+tests i'd already committed that were just wrong (one could never finish - a
+15/15 split in an advantage set never ends; one still had the old
+before-i-seeded-the-server version). fixed. 89 cases, 890 checks, all pass.
+
 ## next
+- short sets + no-ad for NextGen Finals (MatchFormat already has room for it)
+- the inline marks: `;` `^` `!` are ~30k of the remaining parse problems
+- go look at the 60 shot-string-vs-PtWinner disagreements, see if they're real
 - the final-set rules per tournament. wimbledon especially - advantage set
   before 2019, then 12-12 tiebreak, then 10-point tiebreak at 6-6 from 2022.
   MatchFormat should hold the rules so step() doesn't turn into a pile of ifs

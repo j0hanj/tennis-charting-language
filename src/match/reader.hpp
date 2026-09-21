@@ -25,8 +25,9 @@ struct PointRow {
 };
 
 struct ReadResult {
-  std::vector<PointRow> rows;
+  std::vector<PointRow> rows; // in point order within each match, see below
   std::vector<std::string> errors; // a bad row is noted, not fatal
+  int matches_reordered = 0; // how many matches had rows out of order in the file
 };
 
 // Reads a Match Charting Project "-points" csv. Expected header:
@@ -34,6 +35,12 @@ struct ReadResult {
 // Columns are looked up by name, so extra, missing, or reordered columns are
 // fine - only "1st" is required. Rows with a bad number just keep the default
 // and log an error instead of getting dropped.
+//
+// Rows come back in point order within each match (matches stay in the order
+// they first show up). The real files aren't always in order - some matches
+// have a chunk of later points sitting before the start - so replaying the
+// rows as they come would score nonsense. line_no still points at the row's
+// real line in the file.
 ReadResult read_points_csv(std::istream& in);
 
 }  // namespace tcl::match

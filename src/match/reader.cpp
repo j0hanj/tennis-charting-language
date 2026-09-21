@@ -1,5 +1,7 @@
 #include "match/reader.hpp"
 
+#include <algorithm>
+#include <numeric>
 #include <optional>
 #include <string>
 #include <unordered_map>
@@ -20,6 +22,41 @@ std::optional<int> to_int(const std::string& s) {
   } catch (...) {
     return std::nullopt;
   }
+}
+
+// Put each match's rows in Pt order without shuffling the matches themselves.
+// A match where any row is missing its Pt is left exactly as the file had it,
+// since there's nothing safe to sort by.
+void sort_into_point_order(ReadResult& r) {
+  std::unordered_map<std::string, std::size_t> match_index; // first appearance
+  std::unordered_map<std::string, bool> sortable;
+  for (const auto& row : r.rows) {
+    match_index.emplace(row.match_id, match_index.size());
+    auto [it, fresh] = sortable.emplace(row.match_id, true);
+    if (row.pt <= 0) it->second = false;
+  }
+
+  // sort key: (which match, pt) - or (which match, original position) for a
+  // match we can't sort
+  std::vector<std::size_t> order(r.rows.size());
+  std::iota(order.begin(), order.end(), std::size_t{0});
+  auto key = [&](std::size_t i) {
+    const auto& row = r.rows[i];
+    const std::size_t within = sortable[row.match_id] ? static_cast<std::size_t>(row.pt) : i;
+    return std::make_pair(match_index[row.match_id], within);
+  };
+  std::stable_sort(order.begin(), order.end(),
+                   [&](std::size_t a, std::size_t b) { return key(a) < key(b); });
+
+  std::unordered_map<std::string, bool> moved;
+  std::vector<PointRow> sorted;
+  sorted.reserve(r.rows.size());
+  for (std::size_t pos = 0; pos < order.size(); ++pos) {
+    if (order[pos] != pos) moved[r.rows[order[pos]].match_id] = true;
+    sorted.push_back(std::move(r.rows[order[pos]]));
+  }
+  r.rows = std::move(sorted);
+  r.matches_reordered = static_cast<int>(moved.size());
 }
 
 }  // namespace
@@ -86,6 +123,7 @@ ReadResult read_points_csv(std::istream& in) {
     out.rows.push_back(std::move(p));
   }
 
+  sort_into_point_order(out);
   return out;
 }
 

@@ -2,8 +2,8 @@
 //
 // so far: --version, `score` (replay point winners), `lex` (token dump),
 // `parse` (dump the parsed tree), `viz` (draw the point as an svg), `points`
-// (parse every point in a csv), `lint` (points + check the score against the
-// file). stats still to come.
+// (parse every point in a csv), `lint` (points + check the score and the
+// outcomes against the file), `matchviz`, `stats`, `shots`.
 
 #include <cctype>
 #include <fstream>
@@ -12,11 +12,14 @@
 #include <string_view>
 #include <vector>
 
+#include "analytics/stats.hpp"
+#include "ir/shot_table.hpp"
 #include "lexer/lexer.hpp"
 #include "lexer/render.hpp"
 #include "match/reader.hpp"
 #include "parser/parser.hpp"
 #include "scoring/score.hpp"
+#include "sema/outcomes.hpp"
 #include "sema/reconcile.hpp"
 #include "viz/court.hpp"
 
@@ -41,10 +44,12 @@ int print_usage(std::ostream& os) {
         "                           score against the file's own Pts column\n"
         "  matchviz <file.csv> [-o file]\n"
         "                           draw every shot in the file on one court\n"
+        "  stats <file.csv>         rally lengths, serve numbers, how points end\n"
+        "  shots <file.csv> [-o file]\n"
+        "                           flatten to one csv row per shot\n"
         "  --version, -v            print version\n"
         "  --help, -h               this message\n"
-        "\n"
-        "planned: stats\n";
+        "\n";
   return 0;
 }
 
@@ -109,7 +114,14 @@ int run_lint(int argc, char** argv) {
     }
   }
 
-  const auto rec = tcl::sema::reconcile_score(result.rows);
+  auto rec = tcl::sema::reconcile_score(result.rows);
+  const std::size_t score_issues = rec.issues.size();
+
+  // and the second opinion: does the shot string agree with PtWinner
+  const auto flat = tcl::ir::flatten(result.rows);
+  const auto outcome_issues = tcl::sema::check_outcomes(flat.points);
+  rec.issues.insert(rec.issues.end(), outcome_issues.begin(), outcome_issues.end());
+
   for (const auto& issue : rec.issues) {
     std::cerr << issue.match_id << " pt " << issue.pt << " (line " << issue.line_no
                << "): " << issue.message;
@@ -120,10 +132,80 @@ int run_lint(int argc, char** argv) {
   }
 
   std::cout << result.rows.size() << " rows, " << parse_problems << " parse problems, "
-            << rec.points_checked << " scores checked, " << rec.issues.size()
-            << " score issues\n";
+            << rec.points_checked << " scores checked, " << score_issues << " score issues, "
+            << outcome_issues.size() << " outcome disagreements\n";
 
   return (parse_problems == 0 && rec.issues.empty() && result.errors.empty()) ? 0 : 1;
+}
+
+int run_stats(int argc, char** argv) {
+  if (argc < 3) {
+    std::cerr << "stats: give me a csv file, e.g. tcl stats match.csv\n";
+    return 2;
+  }
+  std::ifstream file(argv[2]);
+  if (!file) {
+    std::cerr << "stats: can't open " << argv[2] << '\n';
+    return 2;
+  }
+
+  const auto result = tcl::match::read_points_csv(file);
+  for (const auto& e : result.errors) std::cerr << "  " << e << '\n';
+
+  const auto flat = tcl::ir::flatten(result.rows);
+  const auto matches = tcl::analytics::split_by_match(flat.points);
+  if (matches.empty()) {
+    std::cerr << "stats: no points in " << argv[2] << '\n';
+    return 1;
+  }
+  for (std::size_t i = 0; i < matches.size(); ++i) {
+    if (i > 0) std::cout << "\n----\n\n";
+    std::cout << tcl::analytics::format_report(tcl::analytics::compute_stats(matches[i]));
+  }
+  return 0;
+}
+
+int run_shots(int argc, char** argv) {
+  std::string in_path;
+  std::string out_path;
+  for (int i = 2; i < argc; ++i) {
+    const std::string_view a = argv[i];
+    if ((a == "-o" || a == "--out") && i + 1 < argc) {
+      out_path = argv[++i];
+    } else if (in_path.empty()) {
+      in_path = argv[i];
+    }
+  }
+  if (in_path.empty()) {
+    std::cerr << "shots: give me a csv file, e.g. tcl shots match.csv -o shots.csv\n";
+    return 2;
+  }
+  std::ifstream file(in_path);
+  if (!file) {
+    std::cerr << "shots: can't open " << in_path << '\n';
+    return 2;
+  }
+
+  const auto result = tcl::match::read_points_csv(file);
+  const auto flat = tcl::ir::flatten(result.rows);
+
+  std::ofstream out_file;
+  if (!out_path.empty()) {
+    out_file.open(out_path);
+    if (!out_file) {
+      std::cerr << "shots: can't write " << out_path << '\n';
+      return 2;
+    }
+  }
+  std::ostream& out = out_path.empty() ? std::cout : out_file;
+
+  out << tcl::ir::shots_csv_header() << '\n';
+  for (const auto& r : flat.shots) out << tcl::ir::to_csv_line(r) << '\n';
+  if (!out_path.empty()) {
+    std::cerr << "wrote " << out_path << ": " << flat.shots.size() << " shots from "
+              << flat.points.size() << " points\n";
+  }
+  return 0;
 }
 
 int run_viz(int argc, char** argv) {
@@ -350,6 +432,12 @@ int main(int argc, char** argv) {
   }
   if (cmd == "matchviz") {
     return run_matchviz(argc, argv);
+  }
+  if (cmd == "stats") {
+    return run_stats(argc, argv);
+  }
+  if (cmd == "shots") {
+    return run_shots(argc, argv);
   }
   if (cmd == "points") {
     return run_points(argc, argv);

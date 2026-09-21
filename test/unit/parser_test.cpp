@@ -114,3 +114,77 @@ TEST_CASE("to_string dumps the tree", "[parser]") {
   CHECK(dump.find("shot f dir=3") != std::string::npos);
   CHECK(dump.find("end unforced deep") != std::string::npos);
 }
+
+TEST_CASE("a missed serve is a fault, not a parse error", "[parser]") {
+  auto r = parse("6d");
+  REQUIRE(r.ok());
+  REQUIRE(r.point.has_value());
+  CHECK(r.point->fault == ErrorLoc::kDeep);
+  CHECK(r.point->serve.direction == 6);
+  CHECK(r.point->rally.empty());
+  CHECK_FALSE(r.point->outcome.has_value());
+
+  auto w = parse("4w");
+  REQUIRE(w.ok());
+  CHECK(w.point->fault == ErrorLoc::kWide);
+}
+
+TEST_CASE("a fault code after real shots is still a missing ending", "[parser]") {
+  auto r = parse("4fn");
+  CHECK_FALSE(r.ok());
+  REQUIRE(r.point.has_value());
+  CHECK_FALSE(r.point->fault.has_value());
+  CHECK(r.point->rally.size() == 1);
+}
+
+TEST_CASE("the tree dump says fault for a missed serve", "[parser]") {
+  auto r = parse("6d");
+  REQUIRE(r.point.has_value());
+  CHECK(tcl::ast::to_string(*r.point).find("fault deep") != std::string::npos);
+}
+
+TEST_CASE("a plus right after the serve is serve-and-volley", "[parser]") {
+  auto r = parse("4+b1v1n#");
+  REQUIRE(r.ok());
+  REQUIRE(r.point.has_value());
+  CHECK(r.point->serve.serve_and_volley);
+  CHECK(r.point->serve.direction == 4);
+  // the rest of the rally is still all there
+  REQUIRE(r.point->rally.size() == 2);
+  CHECK(r.point->rally[0].type == 'b');
+  CHECK(r.point->rally[1].type == 'v');
+  CHECK(r.point->outcome->where == ErrorLoc::kNet);
+
+  // and an ordinary serve isn't
+  CHECK_FALSE(parse("4b1*").point->serve.serve_and_volley);
+  // a plus later on is still just an approach shot
+  CHECK(parse("4b+1f*").point->rally[0].position == '+');
+  CHECK_FALSE(parse("4b+1f*").point->serve.serve_and_volley);
+}
+
+TEST_CASE("leading c's are lets on the serve", "[parser]") {
+  auto one = parse("c4b27f3*");
+  REQUIRE(one.ok());
+  CHECK(one.point->serve.lets == 1);
+  CHECK(one.point->serve.direction == 4);
+  CHECK(one.point->rally.size() == 2);
+
+  auto two = parse("cc4f18f3b3b3b3s1d#");
+  REQUIRE(two.ok());
+  CHECK(two.point->serve.lets == 2);
+
+  CHECK(parse("4*").point->serve.lets == 0);
+  CHECK(tcl::ast::to_string(*one.point).find("lets=1") != std::string::npos);
+}
+
+TEST_CASE("trick shots and unknown shots stay in the rally", "[parser]") {
+  auto r = parse("4+b3s3t2v17*");
+  REQUIRE(r.ok());
+  REQUIRE(r.point->rally.size() == 4);
+  CHECK(r.point->rally[2].type == 't');
+  CHECK(r.point->rally[2].direction == 2);
+
+  auto q = parse("4q3d#");
+  REQUIRE(q.ok());
+  CHECK(q.point->rally[0].type == 'q');
+}

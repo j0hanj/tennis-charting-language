@@ -18,7 +18,19 @@ for where things happened, not real tracking):
 
 <img src="docs/examples/match-shot-chart.svg" width="280" alt="every shot from a real charted match, plotted on one court">
 
-more in [docs/examples](docs/examples).
+more in [docs/examples](docs/examples). `tcl stats` on that same match:
+
+```
+Jesper De Jong vs Michael Zheng  (141 points)
+
+                        Jesper De Jong  Michael Zheng
+  points won            64              77
+  first serve in        60%             56%
+  won on serve          58%             70%
+  aces                  6               3
+  double faults         4               2
+  ...
+```
 
 there's thousands of matches typed out like this and basically nothing that reads
 it properly - people load it into a spreadsheet or write a one-off script and
@@ -66,11 +78,18 @@ pretty bare. what's there:
   the Svr check doubles as validation of the tiebreak serve rotation against
   real data. who serves game one is taken from the first row, everything
   after that is checked, not assumed. this is the actual "does this charted
-  match make sense" check
+  match make sense" check. also checks the shot string agrees with the PtWinner
+  column about who won (an ace should go to the server, a netted forehand to
+  the other guy)
+- ir + stats (`src/ir/`, `src/analytics/`) - flattens a match into one row per
+  shot (who hit it, type, direction, depth, how the point ended), then
+  `tcl stats match.csv` works out serve numbers, rally lengths, and how points
+  end by rally length. `tcl shots match.csv -o shots.csv` dumps the flat table.
+  sample output in [docs/examples/stats-example.txt](docs/examples/stats-example.txt)
 - `tcl score aabba` (`--tb`, `--bo5`), `tcl lex 4ffbbf*`, `tcl parse 4ffbbf*`,
   `tcl viz 4ffbbf*`, `tcl points file.csv`, `tcl lint file.csv`,
-  `tcl matchviz file.csv` - mostly for
-  eyeballing while building
+  `tcl matchviz file.csv`, `tcl stats file.csv`, `tcl shots file.csv` - mostly
+  for eyeballing while building
 - notes on the notation in `docs/notation.md`
 
 ## todo
@@ -87,11 +106,20 @@ pretty bare. what's there:
 - [x] error messages that point at the bad character (caret under the offset,
       like a compiler)
 - [x] read a full match csv
-- [x] the checks (replay the score - alternation still todo)
-- [ ] flatten to one row per shot
-- [ ] stats
+- [x] the checks (replay the score and server, shot string vs PtWinner)
+- [x] flatten to one row per shot
+- [x] stats (first pass - serve numbers, rally lengths, endings)
 - [x] the court drawing (schematic for now, no real coordinates)
 - [x] whole-match shot chart (`tcl matchviz`)
+
+## how it holds up on the real data
+
+ran it over the whole 2020s charting file (547k points, 3,337 matches, ~2
+seconds). 3,280 of the matches (98%) replay perfectly through the scoring engine
+- score and server match the file's own columns start to finish. most of the rest
+are NextGen Finals, which plays by different scoring rules i haven't added yet.
+the shot strings agree with the PtWinner column on all but 60 of the 547k points,
+which are probably real charting mistakes.
 
 ## build
 

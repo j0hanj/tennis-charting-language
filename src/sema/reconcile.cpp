@@ -9,6 +9,10 @@ namespace tcl::sema {
 
 namespace {
 
+using tcl::scoring::MatchFormat;
+using tcl::scoring::Player;
+using tcl::scoring::Score;
+
 bool ci_equal(std::string_view a, std::string_view b) {
   if (a.size() != b.size()) return false;
   for (std::size_t i = 0; i < a.size(); ++i) {
@@ -20,43 +24,30 @@ bool ci_equal(std::string_view a, std::string_view b) {
   return true;
 }
 
-}  // namespace
-
-ReconcileResult reconcile_score(const std::vector<tcl::match::PointRow>& rows) {
-  using tcl::scoring::MatchFormat;
-  using tcl::scoring::Player;
-  using tcl::scoring::Score;
-
-  const auto fmt = MatchFormat::best_of_three_with_tiebreak();
-
+// Replay rows[begin, end) - one match - under one set of rules and report
+// everything that doesn't line up. Stops at the first row it can't make sense
+// of (no server, no winner, match already over) rather than flooding the rest
+// with knock-on errors.
+ReconcileResult replay(const std::vector<tcl::match::PointRow>& rows, std::size_t begin,
+                       std::size_t end, const MatchFormat& fmt) {
   ReconcileResult out;
-  std::string current_match;
   Score score;
-  bool skipping = false;     // gave up on the current match_id, wait for the next one
-  bool seeded_server = false; // whether we've taken who-serves-first from the file yet
+  bool seeded_server = false;
 
-  for (const auto& row : rows) {
-    if (row.match_id != current_match) {
-      current_match = row.match_id;
-      score = Score{};
-      skipping = false;
-      seeded_server = false;
-    }
-    if (skipping) continue;
+  for (std::size_t i = begin; i < end; ++i) {
+    const auto& row = rows[i];
 
     if (score.finished) {
       out.issues.push_back({row.match_id, row.pt, row.line_no, "", "",
                             "match already finished by best-of-3 rules - "
                             "maybe it's best of 5?"});
-      skipping = true;
-      continue;
+      return out;
     }
 
     if (row.server != 1 && row.server != 2) {
       out.issues.push_back(
           {row.match_id, row.pt, row.line_no, "", "", "no server on this row, can't check it"});
-      skipping = true;
-      continue;
+      return out;
     }
 
     // nothing in the row data says who serves game one - take it from the
@@ -68,14 +59,10 @@ ReconcileResult reconcile_score(const std::vector<tcl::match::PointRow>& rows) {
 
     // who our replay thinks is serving this point - current_server() already
     // knows about the 1-then-2-at-a-time rotation inside a tiebreak
-    {
-      const int expected_server =
-          tcl::scoring::current_server(score, fmt) == Player::kOne ? 1 : 2;
-      if (row.server != expected_server) {
-        out.issues.push_back({row.match_id, row.pt, row.line_no,
-                              std::to_string(expected_server), std::to_string(row.server),
-                              "server doesn't match"});
-      }
+    const int expected_server = tcl::scoring::current_server(score, fmt) == Player::kOne ? 1 : 2;
+    if (row.server != expected_server) {
+      out.issues.push_back({row.match_id, row.pt, row.line_no, std::to_string(expected_server),
+                            std::to_string(row.server), "server doesn't match"});
     }
 
     if (!row.pts.empty()) {
@@ -94,10 +81,35 @@ ReconcileResult reconcile_score(const std::vector<tcl::match::PointRow>& rows) {
     if (row.pt_winner != 1 && row.pt_winner != 2) {
       out.issues.push_back({row.match_id, row.pt, row.line_no, "", "",
                             "no PtWinner on this row, stopping here"});
-      skipping = true;
-      continue;
+      return out;
     }
     score = tcl::scoring::step(score, row.pt_winner == 1 ? Player::kOne : Player::kTwo, fmt);
+  }
+
+  return out;
+}
+
+}  // namespace
+
+ReconcileResult reconcile_score(const std::vector<tcl::match::PointRow>& rows) {
+  ReconcileResult out;
+
+  std::size_t begin = 0;
+  while (begin < rows.size()) {
+    std::size_t end = begin;
+    while (end < rows.size() && rows[end].match_id == rows[begin].match_id) ++end;
+
+    // nothing in the file says how many sets the match was, so try the
+    // common case first and only fall back to best of five if that doesn't fit
+    ReconcileResult best = replay(rows, begin, end, MatchFormat::best_of_three_with_tiebreak());
+    if (!best.issues.empty()) {
+      ReconcileResult five = replay(rows, begin, end, MatchFormat::best_of_five_with_tiebreak());
+      if (five.issues.size() < best.issues.size()) best = std::move(five);
+    }
+
+    out.points_checked += best.points_checked;
+    out.issues.insert(out.issues.end(), best.issues.begin(), best.issues.end());
+    begin = end;
   }
 
   return out;

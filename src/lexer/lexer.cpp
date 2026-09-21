@@ -7,7 +7,7 @@ namespace tcl::lexer {
 
 namespace {
 
-constexpr std::string_view kShotTypes = "fbrsvzopluyhi";
+constexpr std::string_view kShotTypes = "fbrsvzopluyhimjktq";
 constexpr std::string_view kErrorLocs = "nwdx";
 
 bool contains(std::string_view set, char c) {
@@ -23,6 +23,7 @@ const char* kind_name(Kind k) {
     case Kind::kPosition:  return "position";
     case Kind::kEndMarker: return "end-marker";
     case Kind::kErrorLoc:  return "error-loc";
+    case Kind::kLet:       return "let";
     case Kind::kUnknown:   return "unknown";
     case Kind::kEnd:       return "end";
   }
@@ -53,6 +54,8 @@ Lexed lex(std::string_view src) {
       t.kind = Kind::kEndMarker;
     } else if (contains(kErrorLocs, c)) {
       t.kind = Kind::kErrorLoc;
+    } else if (c == 'c') {
+      t.kind = Kind::kLet;
     } else {
       t.kind = Kind::kUnknown;
       out.diagnostics.push_back(
