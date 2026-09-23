@@ -236,8 +236,25 @@ tests i'd already committed that were just wrong (one could never finish - a
 15/15 split in an advantage set never ends; one still had the old
 before-i-seeded-the-server version). fixed. 89 cases, 890 checks, all pass.
 
+## day 13
+nextgen finals. added `no_ad` to MatchFormat (at deuce the next point just wins,
+`points[w] >= points_to_win_game` with no margin check) and a `nextgen_finals()`
+factory: best of 5, first to 4 games, breaker at 3-3, no-ad. the breaker/set-won
+logic didn't need to change at all - games_for_tiebreak was already a format
+field, not hardcoded to 6, so pointing it at 3 just worked.
+
+reconcile now tries bo3 -> bo5 -> nextgen finals per match and keeps whichever
+has the fewest issues. matches that replay cleanly: 3,280 -> 3,292 (98%, same
+percentage but a cleaner 98% - the nextgen ones aren't being scored wrong
+anymore, they're just gone from the list). score issues across the whole file
+dropped from 2,104 to 386.
+
+the 45 matches still off aren't nextgen anymore - probably real deciding-set
+tiebreak variations (wimbledon/ao have changed their final-set rules a few
+times), or retirements/walkovers where the charted points don't run to a normal
+finish. that's the actual next thing on the list.
+
 ## next
-- short sets + no-ad for NextGen Finals (MatchFormat already has room for it)
 - the inline marks: `;` `^` `!` are ~30k of the remaining parse problems
 - go look at the 60 shot-string-vs-PtWinner disagreements, see if they're real
 - the final-set rules per tournament. wimbledon especially - advantage set

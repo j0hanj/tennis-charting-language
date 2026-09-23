@@ -99,12 +99,17 @@ ReconcileResult reconcile_score(const std::vector<tcl::match::PointRow>& rows) {
     std::size_t end = begin;
     while (end < rows.size() && rows[end].match_id == rows[begin].match_id) ++end;
 
-    // nothing in the file says how many sets the match was, so try the
-    // common case first and only fall back to best of five if that doesn't fit
+    // nothing in the file says the format, so try the common case first and
+    // fall back to best of five, then nextgen finals (short sets, no-ad),
+    // keeping whichever leaves the fewest issues
     ReconcileResult best = replay(rows, begin, end, MatchFormat::best_of_three_with_tiebreak());
     if (!best.issues.empty()) {
-      ReconcileResult five = replay(rows, begin, end, MatchFormat::best_of_five_with_tiebreak());
-      if (five.issues.size() < best.issues.size()) best = std::move(five);
+      for (const auto& fmt : {MatchFormat::best_of_five_with_tiebreak(),
+                              MatchFormat::nextgen_finals()}) {
+        ReconcileResult candidate = replay(rows, begin, end, fmt);
+        if (candidate.issues.size() < best.issues.size()) best = std::move(candidate);
+        if (best.issues.empty()) break;
+      }
     }
 
     out.points_checked += best.points_checked;

@@ -223,3 +223,54 @@ TEST_CASE("step never produces an invalid state over a long random-ish sequence"
   }
   CHECK(s.finished);
 }
+
+TEST_CASE("no_ad: whoever wins the point at deuce takes the game", "[scoring][nextgen]") {
+  const auto fmt = MatchFormat::nextgen_finals();
+  Score s = play("AAABBB", {}, fmt); // 3-3, no-ad deuce
+  CHECK(game_score(s, fmt) == "40-40");
+  CHECK(s.games == std::array<int, 2>{0, 0});
+
+  s = step(s, Player::kTwo, fmt); // sudden death - P2 takes it outright
+  CHECK(s.games == std::array<int, 2>{0, 1});
+  CHECK(s.points == std::array<int, 2>{0, 0});
+}
+
+TEST_CASE("no_ad still needs 4 points if nobody's at deuce", "[scoring][nextgen]") {
+  const auto fmt = MatchFormat::nextgen_finals();
+  Score s = play("AAA", {}, fmt); // 40-0
+  CHECK(s.games == std::array<int, 2>{0, 0});
+  s = step(s, Player::kOne, fmt);
+  CHECK(s.games == std::array<int, 2>{1, 0}); // normal love-ish win, no deuce involved
+}
+
+TEST_CASE("nextgen finals: short sets, breaker at 3-3, best of 5", "[scoring][nextgen]") {
+  const auto fmt = MatchFormat::nextgen_finals();
+
+  std::string p;
+  for (int i = 0; i < 2; ++i) p += "AAAABBBB"; // 2-2, alternating so nobody wins early
+  Score s = play(p, {}, fmt);
+  CHECK(s.games == std::array<int, 2>{2, 2});
+  s = play("AAAAAAAA", s, fmt); // A takes two more games: 4-2
+  CHECK(s.sets == std::array<int, 2>{1, 0});
+  CHECK(s.games == std::array<int, 2>{0, 0});
+
+  // best of 5 needs three sets
+  Score m = play(p, {}, fmt);
+  m = play("AAAAAAAA", m, fmt);
+  CHECK(m.sets[0] == 1);
+  CHECK_FALSE(m.finished);
+}
+
+TEST_CASE("nextgen finals: 3-3 goes to a breaker, not a 5th game", "[scoring][nextgen]") {
+  const auto fmt = MatchFormat::nextgen_finals();
+  std::string p;
+  for (int i = 0; i < 3; ++i) p += "AAAABBBB"; // 3-3 in games
+  Score s = play(p, {}, fmt);
+  CHECK(s.games == std::array<int, 2>{3, 3});
+
+  s = play("AB", s, fmt); // in the breaker now
+  CHECK(game_score(s, fmt) == "1-1"); // raw points, same as any other breaker
+
+  s = play("AAAAAA", s, fmt); // A runs out the breaker 7-1
+  CHECK(s.sets == std::array<int, 2>{1, 0}); // 4-3 set, breaker win needs no margin
+}

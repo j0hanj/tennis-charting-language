@@ -35,6 +35,8 @@ struct MatchFormat {
   int tiebreak_points_to_win = 7; // first to seven points...
   int tiebreak_win_margin = 2;    // ...winning by two. winning it wins the set 7-6.
 
+  bool no_ad = false; // at deuce, the next point just wins - no advantage stage
+
   static constexpr MatchFormat best_of_three_advantage_set() { return {}; }
 
   static constexpr MatchFormat best_of_three_with_tiebreak() {
@@ -53,6 +55,18 @@ struct MatchFormat {
     MatchFormat f;
     f.sets_to_win = 3;
     f.has_tiebreak = true;
+    return f;
+  }
+
+  // best of 5, first to 4 games, breaker at 3-3, no-ad. used at the ATP
+  // NextGen Finals
+  static constexpr MatchFormat nextgen_finals() {
+    MatchFormat f;
+    f.sets_to_win = 3;
+    f.games_to_win_set = 4;
+    f.games_for_tiebreak = 3;
+    f.has_tiebreak = true;
+    f.no_ad = true;
     return f;
   }
 };

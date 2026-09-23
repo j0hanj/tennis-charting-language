@@ -35,10 +35,13 @@ Score step(const Score& score, Player point_winner, const MatchFormat& fmt) {
 
   s.points[w] += 1;
 
-  const bool game_won = breaker ? s.points[w] >= fmt.tiebreak_points_to_win &&
-                                       s.points[w] - s.points[l] >= fmt.tiebreak_win_margin
-                                 : s.points[w] >= fmt.points_to_win_game &&
-                                       s.points[w] - s.points[l] >= fmt.game_win_margin;
+  const bool game_won = breaker
+      ? s.points[w] >= fmt.tiebreak_points_to_win &&
+            s.points[w] - s.points[l] >= fmt.tiebreak_win_margin
+      : fmt.no_ad
+          ? s.points[w] >= fmt.points_to_win_game // sudden death at deuce
+          : s.points[w] >= fmt.points_to_win_game &&
+                s.points[w] - s.points[l] >= fmt.game_win_margin;
   if (!game_won) {
     return s;
   }
