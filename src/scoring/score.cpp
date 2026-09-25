@@ -23,6 +23,18 @@ bool in_tiebreak(const Score& score, const MatchFormat& fmt) {
          score.games[1] == fmt.games_for_tiebreak;
 }
 
+// the last set of the match, i.e. both players are one set away from sets_to_win
+bool in_final_set(const Score& score, const MatchFormat& fmt) {
+  return score.sets[0] == fmt.sets_to_win - 1 && score.sets[1] == fmt.sets_to_win - 1;
+}
+
+// a breaker is normally first-to-tiebreak_points_to_win, except some formats
+// decide the last set with a longer one (first to 10 at wimbledon/the AO)
+int breaker_target(const Score& score, const MatchFormat& fmt) {
+  if (fmt.final_set_tiebreak_to > 0 && in_final_set(score, fmt)) return fmt.final_set_tiebreak_to;
+  return fmt.tiebreak_points_to_win;
+}
+
 }  // namespace
 
 Score step(const Score& score, Player point_winner, const MatchFormat& fmt) {
@@ -36,7 +48,7 @@ Score step(const Score& score, Player point_winner, const MatchFormat& fmt) {
   s.points[w] += 1;
 
   const bool game_won = breaker
-      ? s.points[w] >= fmt.tiebreak_points_to_win &&
+      ? s.points[w] >= breaker_target(score, fmt) &&
             s.points[w] - s.points[l] >= fmt.tiebreak_win_margin
       : fmt.no_ad
           ? s.points[w] >= fmt.points_to_win_game // sudden death at deuce

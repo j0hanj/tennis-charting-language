@@ -99,7 +99,7 @@ pretty bare. what's there:
 - [x] scoring: serve rotation in the breaker
 - [x] scoring: best of 5
 - [x] scoring: short sets / no-ad (nextgen finals)
-- [ ] scoring: the wimbledon final-set rule changes (changed twice)
+- [x] scoring: final-set match-tiebreak (wimbledon / AO style, first to 10)
 - [ ] scoring: walk every reachable score, make sure none are impossible
 - [ ] write out the notation grammar properly
 - [x] tokenizer
@@ -116,11 +116,12 @@ pretty bare. what's there:
 ## how it holds up on the real data
 
 ran it over the whole 2020s charting file (547k points, 3,337 matches, ~2
-seconds). 3,292 of the matches (98%) replay perfectly through the scoring engine
+seconds). 3,333 of the matches (99%) replay perfectly through the scoring engine
 - score and server match the file's own columns start to finish, trying best of
-3, best of 5, and the NextGen Finals format (short sets, no-ad) per match. the
-shot strings agree with the PtWinner column on all but 60 of the 547k points,
-which are probably real charting mistakes.
+3, best of 5, NextGen Finals (short sets, no-ad), and the wimbledon/AO-style
+final-set breaker (first to 10 instead of playing out the last set) per match.
+the shot strings agree with the PtWinner column on all but 60 of the 547k
+points, which are probably real charting mistakes.
 
 ## build
 

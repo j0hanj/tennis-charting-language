@@ -37,11 +37,22 @@ struct MatchFormat {
 
   bool no_ad = false; // at deuce, the next point just wins - no advantage stage
 
+  // some tournaments (wimbledon, the aussie open since the rule changed)
+  // decide the last set with a first-to-10 breaker instead of playing it out
+  // as a normal set. 0 = not special, decider is just another set.
+  int final_set_tiebreak_to = 0;
+
   static constexpr MatchFormat best_of_three_advantage_set() { return {}; }
 
   static constexpr MatchFormat best_of_three_with_tiebreak() {
     MatchFormat f;
     f.has_tiebreak = true;
+    return f;
+  }
+
+  static constexpr MatchFormat best_of_three_with_final_set_breaker(int to = 10) {
+    MatchFormat f = best_of_three_with_tiebreak();
+    f.final_set_tiebreak_to = to;
     return f;
   }
 
@@ -55,6 +66,12 @@ struct MatchFormat {
     MatchFormat f;
     f.sets_to_win = 3;
     f.has_tiebreak = true;
+    return f;
+  }
+
+  static constexpr MatchFormat best_of_five_with_final_set_breaker(int to = 10) {
+    MatchFormat f = best_of_five_with_tiebreak();
+    f.final_set_tiebreak_to = to;
     return f;
   }
 

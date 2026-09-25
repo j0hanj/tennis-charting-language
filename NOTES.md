@@ -254,6 +254,23 @@ tiebreak variations (wimbledon/ao have changed their final-set rules a few
 times), or retirements/walkovers where the charted points don't run to a normal
 finish. that's the actual next thing on the list.
 
+## day 14
+the wimbledon/AO final-set thing. looked at the 45 matches still failing after
+yesterday and most of them had the same shape: games frozen at 6-6 in the
+decider while Pts climbed past 7 (8-3, 9-3...). that's the first-to-10
+match-tiebreak some slams use to decide the last set instead of playing it out.
+
+added `final_set_tiebreak_to` to MatchFormat and two more factories
+(`best_of_three/five_with_final_set_breaker`). turned out to need almost no new
+logic - a breaker already triggers at games_for_tiebreak (6-6) for any set, i
+just needed the *target* to depend on whether this is the deciding set
+(`sets[0] == sets_to_win-1 && sets[1] == sets_to_win-1`), 10 there instead of 7.
+reconcile now tries it as one more fallback format.
+
+45 bad matches -> 4. matches replaying perfectly: 98% -> 99% (3,333/3,337). the
+last 4 are probably retirements or genuine charting slips, not a format i'm
+missing - good place to stop for now.
+
 ## next
 - the inline marks: `;` `^` `!` are ~30k of the remaining parse problems
 - go look at the 60 shot-string-vs-PtWinner disagreements, see if they're real

@@ -274,3 +274,40 @@ TEST_CASE("nextgen finals: 3-3 goes to a breaker, not a 5th game", "[scoring][ne
   s = play("AAAAAA", s, fmt); // A runs out the breaker 7-1
   CHECK(s.sets == std::array<int, 2>{1, 0}); // 4-3 set, breaker win needs no margin
 }
+
+TEST_CASE("final-set breaker: first to 10, not 7, only in the decider", "[scoring][final-set]") {
+  const auto fmt = MatchFormat::best_of_three_with_final_set_breaker();
+
+  // get to 1 set each without a breaker: P1 takes set 1, P2 takes set 2
+  std::string p1set, p2set;
+  for (int i = 0; i < 6; ++i) p1set += "AAAA";
+  for (int i = 0; i < 6; ++i) p2set += "BBBB";
+  Score s = play(p1set, {}, fmt);
+  CHECK(s.sets == std::array<int, 2>{1, 0});
+  s = play(p2set, s, fmt);
+  CHECK(s.sets == std::array<int, 2>{1, 1});
+
+  // an ordinary tiebreak earlier in the match (inside set 1) would've been
+  // first-to-7; this one, in the decider, needs 10
+  std::string to66;
+  for (int i = 0; i < 6; ++i) to66 += "AAAABBBB"; // alternating, no one wins early
+  s = play(to66, s, fmt);
+  CHECK(s.games == std::array<int, 2>{6, 6});
+
+  s = play("AAAAAAA", s, fmt); // 7 straight to A - not enough, needs 10
+  CHECK_FALSE(s.finished);
+  CHECK(game_score(s, fmt) == "7-0");
+
+  s = play("AAA", s, fmt); // 10-0, that's it
+  CHECK(s.finished);
+  CHECK(s.sets == std::array<int, 2>{2, 1});
+}
+
+TEST_CASE("a breaker in a non-final set still only needs 7", "[scoring][final-set]") {
+  const auto fmt = MatchFormat::best_of_three_with_final_set_breaker();
+  std::string to66;
+  for (int i = 0; i < 6; ++i) to66 += "AAAABBBB";
+  Score s = play(to66, {}, fmt); // 6-6 in set 1, not the decider
+  s = play("AAAAAAA", s, fmt); // 7 points, win by 7 - a normal breaker win
+  CHECK(s.sets == std::array<int, 2>{1, 0});
+}
