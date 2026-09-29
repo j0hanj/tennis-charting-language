@@ -48,7 +48,7 @@ Lexed lex(std::string_view src) {
       t.value = c - '0';
     } else if (contains(kShotTypes, c)) {
       t.kind = Kind::kShotType;
-    } else if (c == '+' || c == '-' || c == '=') {
+    } else if (c == '+' || c == '-' || c == '=' || c == '^') {
       t.kind = Kind::kPosition;
     } else if (c == '*' || c == '@' || c == '#') {
       t.kind = Kind::kEndMarker;

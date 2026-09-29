@@ -31,7 +31,7 @@ struct Shot {
   char type = '?';              // f b r s v z o p l u y h i
   std::optional<int> direction; // 1 / 2 / 3
   std::optional<int> depth;     // 7 / 8 / 9 (on the return)
-  std::optional<char> position; // + approach, - at net, = at baseline
+  std::optional<char> position; // + approach, - at net, = at baseline, ^ see notation.md
   std::size_t offset = 0;
 };
 

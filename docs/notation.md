@@ -111,6 +111,7 @@ there are probably more codes i haven't run into yet.
 | `+`  | approach shot  |
 | `-`  | shot hit at the net |
 | `=`  | shot hit at the baseline |
+| `^`  | a modifier, exact meaning unconfirmed |
 
 ## how the point ended
 
@@ -143,10 +144,16 @@ forehand corner; forehand forced error.
 
 ## stuff im not handling yet
 
-seen in real data, flagged as unrecognized for now:
+seen in real data, still flagged as unrecognized:
 
-- `;` and `^` and `!` - inline marks in the middle of a rally. they're not shots
-  (they don't change who's hitting) so dropping them keeps the alternation right
+- `;` and `!` - inline marks in the middle of a rally, not shots (don't change
+  who's hitting). checked these against an independent parser
+  ([love-all](https://github.com/AnthonyBurre/love-all)) that reads the same
+  dataset - it treats both as unrecognized too, so this isn't a gap specific to
+  my own parsing, it's genuinely outside what two separate readings agree on.
+  the same check is where `^` came from: their tokenizer groups it with
+  `+ - =` as a shot modifier, not guessed from where it sits in the string, so
+  it's in the position table above now instead of this list.
 
 and the rest of the not-yet list:
 

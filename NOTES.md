@@ -271,10 +271,24 @@ reconcile now tries it as one more fallback format.
 last 4 are probably retirements or genuine charting slips, not a format i'm
 missing - good place to stop for now.
 
+## day 15
+went after the inline marks. couldn't find `;` `^` `!` in the quick start guide
+so i went looking for someone else who'd parsed this notation independently,
+found [love-all](https://github.com/AnthonyBurre/love-all) (a much bigger,
+more thorough project on the same dataset) and read their tokenizer.
+
+turns out `^` is grouped with `+ - =` as a shot modifier in their parser too -
+not something i guessed from where it sits in the string, an independent
+reading agrees. added it as a fourth position code. and `;` / `!` aren't in
+their grammar either - they fall into their own "unknown character" bucket,
+same as mine. so those two aren't a gap in my parsing specifically, they're
+genuinely outside what two separate readings of the data agree on. good to
+know, and cheaper than trying to guess.
+
+parse problems across the whole file: 31,320 -> 23,721, just from `^`.
+
 ## next
-- the inline marks: `;` `^` `!` are ~30k of the remaining parse problems
 - go look at the 60 shot-string-vs-PtWinner disagreements, see if they're real
-- the final-set rules per tournament. wimbledon especially - advantage set
-  before 2019, then 12-12 tiebreak, then 10-point tiebreak at 6-6 from 2022.
-  MatchFormat should hold the rules so step() doesn't turn into a pile of ifs
-- stats off the shot table, once there's an IR to flatten into
+- the 4 remaining bad matches from day 14
+- `;` and `!` - probably need someone who actually charts to explain these,
+  two independent parsers both guessing isn't going to get further than this

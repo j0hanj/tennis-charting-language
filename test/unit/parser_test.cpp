@@ -188,3 +188,14 @@ TEST_CASE("trick shots and unknown shots stay in the rally", "[parser]") {
   REQUIRE(q.ok());
   CHECK(q.point->rally[0].type == 'q');
 }
+
+TEST_CASE("^ is a position marker like + - =", "[parser]") {
+  // real point from the dataset: serve T, b(dir2,depth8), f(pos+,dir3),
+  // b(dir2), v(pos^,dir1), r, forced error
+  auto r = parse("6b28f+3b2v^1r#");
+  REQUIRE(r.ok());
+  REQUIRE(r.point->rally.size() == 5);
+  CHECK(r.point->rally[3].type == 'v');
+  CHECK(r.point->rally[3].position == '^');
+  CHECK(r.point->rally[3].direction == 1);
+}

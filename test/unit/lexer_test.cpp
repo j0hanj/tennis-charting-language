@@ -60,7 +60,10 @@ TEST_CASE("offsets point back at the source", "[lexer]") {
 }
 
 TEST_CASE("positions, end markers and error locations", "[lexer]") {
-  CHECK(kinds("+-=") == std::vector<Kind>{Kind::kPosition, Kind::kPosition, Kind::kPosition});
+  // ^ groups with + - = as a modifier - confirmed against an independent
+  // parser (love-all), not just guessed from where it sits in the string
+  CHECK(kinds("+-=^") ==
+        std::vector<Kind>{Kind::kPosition, Kind::kPosition, Kind::kPosition, Kind::kPosition});
   CHECK(kinds("*@#") == std::vector<Kind>{Kind::kEndMarker, Kind::kEndMarker, Kind::kEndMarker});
   CHECK(kinds("@n") == std::vector<Kind>{Kind::kEndMarker, Kind::kErrorLoc});
   CHECK(kinds("#w") == std::vector<Kind>{Kind::kEndMarker, Kind::kErrorLoc});
