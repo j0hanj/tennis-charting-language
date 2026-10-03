@@ -106,7 +106,8 @@ ReconcileResult reconcile_score(const std::vector<tcl::match::PointRow>& rows) {
       for (const auto& fmt : {MatchFormat::best_of_five_with_tiebreak(),
                               MatchFormat::nextgen_finals(),
                               MatchFormat::best_of_five_with_final_set_breaker(),
-                              MatchFormat::best_of_three_with_final_set_breaker()}) {
+                              MatchFormat::best_of_three_with_final_set_breaker(),
+                              MatchFormat::best_of_three_with_match_tiebreak_decider()}) {
         ReconcileResult candidate = replay(rows, begin, end, fmt);
         if (candidate.issues.size() < best.issues.size()) best = std::move(candidate);
         if (best.issues.empty()) break;

@@ -33,11 +33,13 @@ struct ReconcileResult {
 //
 // The file doesn't say the match format, so each match is tried against a
 // short list of formats - best-of-three, best-of-five, NextGen Finals (short
-// sets, no-ad), and the best-of-3/5 variants where the last set is decided by
-// a first-to-10 breaker instead of being played out (wimbledon, the AO) -
-// keeping whichever leaves the fewest issues. Anything stranger still shows
-// up as issues - reconciliation stops at the first row it can't make sense of
-// instead of flooding every row after it with nonsense.
+// sets, no-ad), the best-of-3/5 variants where the last set is decided by a
+// first-to-10 breaker after being played to 6-6 (wimbledon, the AO), and a
+// team-event style variant where the decider *is* the breaker from 0-0, no
+// set played first - keeping whichever leaves the fewest issues. Anything
+// stranger still shows up as issues - reconciliation stops at the first row
+// it can't make sense of instead of flooding every row after it with
+// nonsense.
 ReconcileResult reconcile_score(const std::vector<tcl::match::PointRow>& rows);
 
 }  // namespace tcl::sema

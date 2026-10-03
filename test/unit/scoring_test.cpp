@@ -311,3 +311,26 @@ TEST_CASE("a breaker in a non-final set still only needs 7", "[scoring][final-se
   s = play("AAAAAAA", s, fmt); // 7 points, win by 7 - a normal breaker win
   CHECK(s.sets == std::array<int, 2>{1, 0});
 }
+
+TEST_CASE("match tiebreak decider: straight to the breaker, no games first", "[scoring][final-set]") {
+  const auto fmt = MatchFormat::best_of_three_with_match_tiebreak_decider();
+
+  // one set each - no breaker involved in getting there
+  std::string a_set, b_set;
+  for (int i = 0; i < 6; ++i) a_set += "AAAA";
+  for (int i = 0; i < 6; ++i) b_set += "BBBB";
+  Score t = play(a_set, {}, fmt);
+  t = play(b_set, t, fmt);
+  CHECK(t.sets == std::array<int, 2>{1, 1});
+
+  // the decider: no games get played, the very first point is already in a
+  // breaker, first to 10
+  CHECK(game_score(t, fmt) == "0-0");
+  t = step(t, Player::kOne, fmt);
+  CHECK(t.games == std::array<int, 2>{0, 0}); // still 0-0 games - it's all breaker
+  CHECK(game_score(t, fmt) == "1-0");
+
+  t = play("AAAAAAAAA", t, fmt); // 10 total for A, 0 for B
+  CHECK(t.finished);
+  CHECK(t.sets == std::array<int, 2>{2, 1});
+}

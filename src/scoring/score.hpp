@@ -42,6 +42,10 @@ struct MatchFormat {
   // as a normal set. 0 = not special, decider is just another set.
   int final_set_tiebreak_to = 0;
 
+  // some team/exhibition formats skip the decider entirely and go straight
+  // to the breaker at 0-0, instead of only switching to one at 6-6
+  bool final_set_is_breaker_only = false;
+
   static constexpr MatchFormat best_of_three_advantage_set() { return {}; }
 
   static constexpr MatchFormat best_of_three_with_tiebreak() {
@@ -53,6 +57,15 @@ struct MatchFormat {
   static constexpr MatchFormat best_of_three_with_final_set_breaker(int to = 10) {
     MatchFormat f = best_of_three_with_tiebreak();
     f.final_set_tiebreak_to = to;
+    return f;
+  }
+
+  // same deciding-set breaker, but the decider is *only* the breaker - no
+  // games are played first. seen in team events (e.g. a tie where the third
+  // rubber is "first to 10" instead of a full set)
+  static constexpr MatchFormat best_of_three_with_match_tiebreak_decider(int to = 10) {
+    MatchFormat f = best_of_three_with_final_set_breaker(to);
+    f.final_set_is_breaker_only = true;
     return f;
   }
 

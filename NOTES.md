@@ -309,7 +309,41 @@ about as good a confirmation as i'll get that the rest of this pile is
 genuine charting noise, not something my parser is getting wrong - stopping
 here instead of trying to guess a rule out of 17 inconsistent examples.
 
+## day 17
+looked at the 4 remaining bad matches from day 14. three different root
+causes, not one format gap:
+
+- **French Club** (a team event) - the deciding "set" was just a straight
+  first-to-10 breaker from 0-0, no games played at all. Gm1/Gm2 sat at 0-0 for
+  the entire thing while Pts climbed. added `final_set_is_breaker_only` to
+  MatchFormat and a `best_of_three_with_match_tiebreak_decider()` factory -
+  reused almost everything from the wimbledon/AO breaker, just made
+  `in_tiebreak()` true for the whole decider instead of only at 6-6. fixed:
+  0 score issues now.
+- **Dubai** (Davidovich_Fokina-Jaziri) - found two byte-identical "pt 7" rows
+  and figured the match got double-pasted, so i added a reader fix that drops
+  an exact repeat of the line right before it. wrong diagnosis: those two rows
+  are 76 lines apart, not adjacent - turns out the *whole match* is charted
+  twice back to back in two separate blocks (pt 1-76, then pt 1-76 again,
+  mostly but not always identical between the two copies). kept the adjacent-
+  dedup fix anyway since it's a real failure mode even if it's not what hit
+  here (checked: zero adjacent duplicates anywhere in the real file).
+- **Canada Masters** (Hurkacz-Kyrgios) - same shape as Dubai: the whole
+  match_id shows up twice, pt 1-204 charted once, then pt 1-204 charted again
+  with different shot strings (two separate charting attempts, probably two
+  people). not safely fixable by guessing - sorting by Pt would just
+  interleave the two attempts into a replay that makes even less sense.
+
+matches replaying perfectly: 3,333 -> 3,334 (99%, Wimbledon R16
+Sinner-Alcaraz is still unexplained - didn't get to it). Dubai and Canada
+Masters are staying broken for now; "the same match charted twice under one
+match_id" is a real, different problem from anything MatchFormat can fix, and
+guessing wrong here would be worse than just leaving it flagged.
+
 ## next
-- the 4 remaining bad matches from day 14
 - `;` and `!` - probably need someone who actually charts to explain these,
   two independent parsers both guessing isn't going to get further than this
+- whole-match double-charting (dubai, canada masters) - would need detecting
+  a Pt sequence that restarts partway through a match_id, which risks false
+  positives if not careful. not attempting until there's a real reason to
+- wimbledon r16 sinner-alcaraz - still unexplained, didn't dig into this one

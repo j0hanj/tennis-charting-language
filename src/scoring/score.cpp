@@ -18,14 +18,17 @@ const char* point_label(int p) {
 
 namespace {
 
-bool in_tiebreak(const Score& score, const MatchFormat& fmt) {
-  return fmt.has_tiebreak && score.games[0] == fmt.games_for_tiebreak &&
-         score.games[1] == fmt.games_for_tiebreak;
-}
-
 // the last set of the match, i.e. both players are one set away from sets_to_win
 bool in_final_set(const Score& score, const MatchFormat& fmt) {
   return score.sets[0] == fmt.sets_to_win - 1 && score.sets[1] == fmt.sets_to_win - 1;
+}
+
+bool in_tiebreak(const Score& score, const MatchFormat& fmt) {
+  // some formats skip the decider entirely and play it as one long breaker
+  // from 0-0, instead of only switching to a breaker once games reach 6-6
+  if (fmt.final_set_is_breaker_only && in_final_set(score, fmt)) return true;
+  return fmt.has_tiebreak && score.games[0] == fmt.games_for_tiebreak &&
+         score.games[1] == fmt.games_for_tiebreak;
 }
 
 // a breaker is normally first-to-tiebreak_points_to_win, except some formats
