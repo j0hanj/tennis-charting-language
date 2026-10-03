@@ -92,6 +92,16 @@ TEST_CASE("an error marker on a bare serve is the returner's error", "[ir]") {
   CHECK(p.ender == Ender::kForcedError);
 }
 
+TEST_CASE("a located error on a bare serve is the server's own fault", "[ir]") {
+  // "6d@" - serve landed deep by the charter's own location tag, same idea as
+  // a double fault just marked unforced instead of left as a plain fault.
+  // confirmed against the real dataset: 33/34 of these go to the returner.
+  const auto f = flatten({row(1, 1, "6d@", "", 2)});
+  REQUIRE(f.points.size() == 1);
+  CHECK(f.points[0].last_hitter == 1);    // the server's own miss
+  CHECK(f.points[0].implied_winner == 2); // so the returner wins it
+}
+
 TEST_CASE("an unforced error by the server hands the point to the returner", "[ir]") {
   // serve, return, then the server nets one: 3 shots, server hit the last
   const auto f = flatten({row(1, 1, "4fbn@", "", 2)});

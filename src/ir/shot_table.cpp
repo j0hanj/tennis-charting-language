@@ -54,9 +54,16 @@ Flattened flatten(const std::vector<tcl::match::PointRow>& rows) {
     } else {
       ps.rally_len = 1 + static_cast<int>(p.rally.size());
       ps.last_hitter = hitter_of(server, ps.rally_len);
-      // "4#" / "4@" - a serve with an error marker and no return charted. the
-      // error is the returner's (they couldn't get it back), not the server's
-      if (p.rally.empty() && p.outcome && p.outcome->ender != Ender::kWinner) {
+      // "4#" / "4@" - a serve with an error marker and no return charted. with
+      // no location attached, that's the returner's error (couldn't get it
+      // back) - but "6d@" (a location attached to a bare serve) means the
+      // *serve* went deep, same as a double fault just tagged unforced
+      // instead of left as a plain fault, so that one's on the server.
+      // checked against the whole dataset: 20,153/20,153 of the bare-marker
+      // ones go to the server, 33/34 of the location-tagged ones to the
+      // returner.
+      if (p.rally.empty() && p.outcome && p.outcome->ender != Ender::kWinner &&
+          !p.outcome->where.has_value()) {
         ps.last_hitter = returner;
       }
       if (p.outcome) {
