@@ -87,9 +87,15 @@ ReadResult read_points_csv(std::istream& in) {
 
   int line_no = 1;
   std::string line;
+  std::string prev_line;
   while (std::getline(in, line)) {
     ++line_no;
     if (line.empty()) continue;
+    if (line == prev_line) {
+      ++out.duplicate_rows_dropped;
+      continue;
+    }
+    prev_line = line;
 
     const auto row = split_csv_line(line);
     PointRow p;

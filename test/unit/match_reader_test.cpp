@@ -111,3 +111,28 @@ TEST_CASE("a match with a missing Pt keeps the file's order", "[match]") {
   CHECK(r.rows[1].first == "a");
   CHECK(r.matches_reordered == 0);
 }
+
+TEST_CASE("an exact duplicate row is dropped", "[match]") {
+  // seen in the wild: the same point charted twice in a row, byte for byte
+  std::istringstream in(
+      "match_id,Pt,1st\n"
+      "m,1,4*\n"
+      "m,2,4w\n"
+      "m,2,4w\n"  // exact repeat of the line above
+      "m,3,6*\n");
+  const auto r = read_points_csv(in);
+  REQUIRE(r.rows.size() == 3);
+  CHECK(r.duplicate_rows_dropped == 1);
+  CHECK(r.rows[2].pt == 3);
+}
+
+TEST_CASE("two rows that just happen to match aren't dropped unless adjacent", "[match]") {
+  std::istringstream in(
+      "match_id,Pt,1st\n"
+      "m,1,4*\n"
+      "m,2,4w\n"
+      "m,3,4*\n");  // same content as pt 1, but not back to back
+  const auto r = read_points_csv(in);
+  CHECK(r.rows.size() == 3);
+  CHECK(r.duplicate_rows_dropped == 0);
+}
