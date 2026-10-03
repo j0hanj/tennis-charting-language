@@ -120,8 +120,10 @@ seconds). 3,333 of the matches (99%) replay perfectly through the scoring engine
 - score and server match the file's own columns start to finish, trying best of
 3, best of 5, NextGen Finals (short sets, no-ad), and the wimbledon/AO-style
 final-set breaker (first to 10 instead of playing out the last set) per match.
-the shot strings agree with the PtWinner column on all but 60 of the 547k
-points, which are probably real charting mistakes.
+the shot strings agree with the PtWinner column on all but 26 of the 547k
+points - checked, the rest look like genuine charting noise (a couple even
+have a note from the charter saying they couldn't see the point clearly),
+not a bug on this end.
 
 ## build
 

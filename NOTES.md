@@ -287,8 +287,29 @@ know, and cheaper than trying to guess.
 
 parse problems across the whole file: 31,320 -> 23,721, just from `^`.
 
+## day 16
+went through the 60 shot-string/PtWinner disagreements. found one real, clean
+bug: 34 of them were a bare serve with an error location AND a marker, like
+`6d@` (serve, no rally, error-loc `d`, then `@`). i was treating that the same
+as a plain `4#` (blame the returner, they whiffed the uncharted return), but
+checked both shapes against the whole dataset and they're opposite:
+20,153/20,153 of the no-location ones really do go to the server, but
+33/34 of the location-tagged ones go to the *returner* - `6d@` is the serve
+itself landing deep, same idea as a double fault just tagged unforced instead
+of left as a plain fault. fixed the rule to only blame the returner when
+there's no location attached. 60 -> 26.
+
+looked at what's left in the 26. no single pattern - a handful of points
+ending in two terminal markers back to back (`...#@`, `...**`, only 17 of
+those in the whole 547k-point file, and inconsistent - sometimes the same
+marker twice, which isn't explainable as a typo-correction), and at least 2
+where the charter's own Notes column says outright they couldn't see the
+point clearly ("replay didn't allowed to see the serve properly"). that's
+about as good a confirmation as i'll get that the rest of this pile is
+genuine charting noise, not something my parser is getting wrong - stopping
+here instead of trying to guess a rule out of 17 inconsistent examples.
+
 ## next
-- go look at the 60 shot-string-vs-PtWinner disagreements, see if they're real
 - the 4 remaining bad matches from day 14
 - `;` and `!` - probably need someone who actually charts to explain these,
   two independent parsers both guessing isn't going to get further than this
