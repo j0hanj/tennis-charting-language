@@ -90,6 +90,10 @@ pretty bare. what's there:
   `tcl viz 4ffbbf*`, `tcl points file.csv`, `tcl lint file.csv`,
   `tcl matchviz file.csv`, `tcl stats file.csv`, `tcl shots file.csv` - mostly
   for eyeballing while building
+- report (`src/report/`) - `tcl report match.csv out/` writes one standalone
+  html page per match: summary, shot chart, score timeline, and every point as
+  a collapsible court diagram. no js, no external files, just open it in a
+  browser
 - notes on the notation in `docs/notation.md`
 
 ## todo
@@ -113,6 +117,7 @@ pretty bare. what's there:
 - [x] stats (first pass - serve numbers, rally lengths, endings)
 - [x] the court drawing (schematic for now, no real coordinates)
 - [x] whole-match shot chart (`tcl matchviz`)
+- [x] per-match html report (`tcl report`)
 
 ## how it holds up on the real data
 

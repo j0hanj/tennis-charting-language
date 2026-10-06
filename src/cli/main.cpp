@@ -6,6 +6,7 @@
 // outcomes against the file), `matchviz`, `stats`, `shots`.
 
 #include <cctype>
+#include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <string>
@@ -18,6 +19,7 @@
 #include "lexer/render.hpp"
 #include "match/reader.hpp"
 #include "parser/parser.hpp"
+#include "report/report.hpp"
 #include "scoring/score.hpp"
 #include "sema/outcomes.hpp"
 #include "sema/reconcile.hpp"
@@ -47,6 +49,8 @@ int print_usage(std::ostream& os) {
         "  stats <file.csv>         rally lengths, serve numbers, how points end\n"
         "  shots <file.csv> [-o file]\n"
         "                           flatten to one csv row per shot\n"
+        "  report <file.csv> <out-dir>\n"
+        "                           one html page per match, self-contained\n"
         "  --version, -v            print version\n"
         "  --help, -h               this message\n"
         "\n";
@@ -162,6 +166,48 @@ int run_stats(int argc, char** argv) {
     if (i > 0) std::cout << "\n----\n\n";
     std::cout << tcl::analytics::format_report(tcl::analytics::compute_stats(matches[i]));
   }
+  return 0;
+}
+
+int run_report(int argc, char** argv) {
+  if (argc < 4) {
+    std::cerr << "report: give me a csv and an output dir, e.g. tcl report match.csv out/\n";
+    return 2;
+  }
+  std::ifstream file(argv[2]);
+  if (!file) {
+    std::cerr << "report: can't open " << argv[2] << '\n';
+    return 2;
+  }
+  const std::string out_dir = argv[3];
+
+  const auto result = tcl::match::read_points_csv(file);
+  for (const auto& e : result.errors) std::cerr << "  " << e << '\n';
+
+  // one page per match_id, in file order, named after the match
+  std::vector<std::vector<tcl::match::PointRow>> matches;
+  for (const auto& row : result.rows) {
+    if (matches.empty() || matches.back().front().match_id != row.match_id) {
+      matches.emplace_back();
+    }
+    matches.back().push_back(row);
+  }
+  if (matches.empty()) {
+    std::cerr << "report: no points in " << argv[2] << '\n';
+    return 1;
+  }
+
+  std::filesystem::create_directories(out_dir);
+  for (const auto& rows : matches) {
+    const std::string name = rows.front().match_id + ".html";
+    std::ofstream out(std::filesystem::path(out_dir) / name);
+    if (!out) {
+      std::cerr << "report: can't write " << name << '\n';
+      return 2;
+    }
+    out << tcl::report::render_match_report(rows);
+  }
+  std::cout << "wrote " << matches.size() << " report(s) to " << out_dir << '\n';
   return 0;
 }
 
@@ -435,6 +481,9 @@ int main(int argc, char** argv) {
   }
   if (cmd == "stats") {
     return run_stats(argc, argv);
+  }
+  if (cmd == "report") {
+    return run_report(argc, argv);
   }
   if (cmd == "shots") {
     return run_shots(argc, argv);

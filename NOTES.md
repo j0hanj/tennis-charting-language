@@ -347,3 +347,18 @@ guessing wrong here would be worse than just leaving it flagged.
   a Pt sequence that restarts partway through a match_id, which risks false
   positives if not careful. not attempting until there's a real reason to
 - wimbledon r16 sinner-alcaraz - still unexplained, didn't dig into this one
+
+## day 18
+`tcl report match.csv out/` - one standalone html page per match. built in six
+small commits so each one stayed reviewable: html helpers and a page wrapper,
+the summary section, the shot chart embedded inline, a score timeline (one
+line per point, replayed the same way lint does), every point as a collapsible
+court svg, then the cli command.
+
+ran it on the french club match: 136 points, the summary matches `tcl stats`,
+and it opens as a single file with nothing else to load. one thing i noticed
+and didn't fix: the shot chart's title and subtitle overlap a little at the
+top (same as matchviz, the title band is just tight).
+
+next: nothing big queued. the open items are still the double-charted matches
+and the `;` / `!` question.
