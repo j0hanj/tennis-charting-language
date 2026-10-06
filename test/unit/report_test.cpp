@@ -46,3 +46,11 @@ TEST_CASE("the report names the players and has a summary", "[report]") {
   CHECK(html.find("<h2>summary</h2>") != std::string::npos);
   CHECK(html.find("points won") != std::string::npos);
 }
+
+TEST_CASE("the report embeds a shot chart svg", "[report]") {
+  const std::vector<PointRow> rows{row(1, "4*", "", 1, 1), row(2, "6f2b*", "", 2, 2)};
+  const std::string html = render_match_report(rows);
+  CHECK(html.find("<h2>shot chart</h2>") != std::string::npos);
+  CHECK(html.find("<svg") != std::string::npos);
+  CHECK(html.find("</svg>") != std::string::npos);
+}
