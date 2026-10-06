@@ -4,6 +4,7 @@
 #include "ir/shot_table.hpp"
 #include "parser/parser.hpp"
 #include "report/html.hpp"
+#include "scoring/score.hpp"
 #include "viz/court.hpp"
 
 namespace tcl::report {
@@ -20,6 +21,26 @@ std::string shot_chart_section(const std::vector<tcl::match::PointRow>& rows) {
     if (auto pr = tcl::parser::parse(src); pr.point) points.push_back(std::move(*pr.point));
   }
   return "<h2>shot chart</h2>\n" + tcl::viz::render_match_svg(points, "every shot") + "\n";
+}
+
+// one line per point: the running scoreline after it was played. replays the
+// file's own PtWinner through the scoring engine (best of 3, tiebreak) - the
+// same replay lint uses, just shown instead of checked
+std::string timeline_section(const std::vector<tcl::match::PointRow>& rows) {
+  using tcl::scoring::MatchFormat;
+  using tcl::scoring::Player;
+  const auto fmt = MatchFormat::best_of_three_with_tiebreak();
+
+  std::string out = "<h2>score timeline</h2>\n<pre>";
+  tcl::scoring::Score score;
+  for (const auto& row : rows) {
+    if (row.pt_winner != 1 && row.pt_winner != 2) continue;
+    if (score.finished) break;
+    score = tcl::scoring::step(score, row.pt_winner == 1 ? Player::kOne : Player::kTwo, fmt);
+    out += html_escape(std::to_string(row.pt)) + "  " + html_escape(scoreline(score, fmt)) + "\n";
+  }
+  out += "</pre>\n";
+  return out;
 }
 
 std::string summary_section(const tcl::analytics::MatchStats& st) {
@@ -39,6 +60,7 @@ std::string render_match_report(const std::vector<tcl::match::PointRow>& rows) {
   body += "<div>" + html_escape(stats.match_id) + "</div>\n";
   body += summary_section(stats);
   body += shot_chart_section(rows);
+  body += timeline_section(rows);
 
   return html_page(title, body);
 }
