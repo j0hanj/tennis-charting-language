@@ -63,3 +63,15 @@ TEST_CASE("the timeline shows the running score after each point", "[report]") {
   CHECK(html.find("1  0-0 0-0 15-0") != std::string::npos);
   CHECK(html.find("3  0-0 0-0 30-15") != std::string::npos);
 }
+
+TEST_CASE("each point gets a collapsible court diagram", "[report]") {
+  const std::vector<PointRow> rows{row(1, "4*", "", 1, 1), row(2, "6f2b*", "", 2, 2)};
+  const std::string html = render_match_report(rows);
+  CHECK(html.find("<h2>points</h2>") != std::string::npos);
+  CHECK(html.find("<details><summary>point 1") != std::string::npos);
+  CHECK(html.find("<details><summary>point 2") != std::string::npos);
+  // one diagram per point, plus the shot chart
+  size_t svgs = 0;
+  for (size_t at = html.find("<svg"); at != std::string::npos; at = html.find("<svg", at + 1)) ++svgs;
+  CHECK(svgs == 3);
+}

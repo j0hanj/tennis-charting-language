@@ -43,6 +43,25 @@ std::string timeline_section(const std::vector<tcl::match::PointRow>& rows) {
   return out;
 }
 
+// every point as a collapsible row. the summary line is the point number,
+// server and result; opening it shows that point's own court diagram
+std::string points_section(const std::vector<tcl::match::PointRow>& rows) {
+  std::string out = "<h2>points</h2>\n";
+  for (const auto& row : rows) {
+    const std::string& src = !row.second.empty() ? row.second : row.first;
+    if (src.empty()) continue;
+    const auto pr = tcl::parser::parse(src);
+    if (!pr.point) continue;
+
+    const std::string head = "point " + std::to_string(row.pt) + "  serve " +
+                             std::to_string(row.server) + "  winner " +
+                             std::to_string(row.pt_winner) + "  " + src;
+    out += "<details><summary>" + html_escape(head) + "</summary>\n";
+    out += tcl::viz::render_svg(*pr.point, src) + "</details>\n";
+  }
+  return out;
+}
+
 std::string summary_section(const tcl::analytics::MatchStats& st) {
   return "<h2>summary</h2>\n<pre>" + html_escape(tcl::analytics::format_report(st)) +
          "</pre>\n";
@@ -61,6 +80,7 @@ std::string render_match_report(const std::vector<tcl::match::PointRow>& rows) {
   body += summary_section(stats);
   body += shot_chart_section(rows);
   body += timeline_section(rows);
+  body += points_section(rows);
 
   return html_page(title, body);
 }
