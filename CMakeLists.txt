@@ -25,6 +25,7 @@ add_library(tcl_core STATIC
   src/sema/outcomes.cpp
   src/ir/shot_table.cpp
   src/analytics/stats.cpp
+  src/report/html.cpp
 )
 target_include_directories(tcl_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
