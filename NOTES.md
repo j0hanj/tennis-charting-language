@@ -340,14 +340,6 @@ Masters are staying broken for now; "the same match charted twice under one
 match_id" is a real, different problem from anything MatchFormat can fix, and
 guessing wrong here would be worse than just leaving it flagged.
 
-## next
-- `;` and `!` - probably need someone who actually charts to explain these,
-  two independent parsers both guessing isn't going to get further than this
-- whole-match double-charting (dubai, canada masters) - would need detecting
-  a Pt sequence that restarts partway through a match_id, which risks false
-  positives if not careful. not attempting until there's a real reason to
-- wimbledon r16 sinner-alcaraz - still unexplained, didn't dig into this one
-
 ## day 18
 `tcl report match.csv out/` - one standalone html page per match. built in six
 small commits so each one stayed reviewable: html helpers and a page wrapper,
@@ -362,3 +354,32 @@ top (same as matchviz, the title band is just tight).
 
 next: nothing big queued. the open items are still the double-charted matches
 and the `;` / `!` question.
+
+## day 19
+fixed the title-overlap nit from yesterday (see the commit for that one),
+then went after the last unexplained match: wimbledon r16 sinner-alcaraz.
+
+wrote a small standalone replay (outside reconcile, just calling step()
+directly row by row) to see exactly where it goes wrong. turns out it
+doesn't, mechanically - every single Pts/Svr value in the file matches the
+replay exactly for 185 straight points, and the set boundaries line up with
+the file's own Gm1/Gm2 resets to 0-0 (pt 43, 103, 186). replaying strictly
+off the PtWinner column, player 1 wins all three of the first three sets,
+which means the match should already be over by pt 186 under any best-of-5
+format - and that's exactly what `tcl lint` is reporting.
+
+checked the actual Wimbledon result: Sinner beat Alcaraz in four sets,
+6-1, 6-4, 7-6(5), 6-3 - so Alcaraz won one of the first three sets. that
+directly contradicts what a correct, rule-following replay of this file's
+own PtWinner column says. the file is internally self-consistent (every
+per-point score checks out against itself) but globally wrong - one of
+the first three sets belongs to the other player in reality, and nothing
+in the file itself says which point(s) have the wrong PtWinner.
+
+not something my code is getting wrong - a correct replay mechanically
+produces the contradiction. leaving this one flagged instead of guessing
+which point to flip just to make the number go to 100%.
+
+## next
+- `;` and `!` - still need an actual charter to explain these
+- the double-charted matches (dubai, canada masters) from day 17
