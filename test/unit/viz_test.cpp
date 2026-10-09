@@ -92,3 +92,17 @@ TEST_CASE("a missed serve is drawn as a fault, not a winner", "[viz]") {
   CHECK(svg.find("#e5484d") != std::string::npos);  // red end marker
   CHECK(svg.find("fill='#f4c542'") == std::string::npos);  // no gold winner dot (the path stroke is gold either way)
 }
+
+TEST_CASE("render_match_svg's title and subtitle don't sit on top of each other", "[viz]") {
+  const std::vector<tcl::ast::Point> points{point_for("4ffbbf*")};
+  const std::string svg = render_match_svg(points, "a title");
+
+  auto y_of = [&](const std::string& needle) {
+    const auto at = svg.find(needle);
+    REQUIRE(at != std::string::npos);
+    const auto y_at = svg.rfind("y='", at) + 3;
+    return std::stod(svg.substr(y_at, svg.find('\'', y_at) - y_at));
+  };
+  // two text baselines at least a font-size apart, not stacked on the same line
+  CHECK(y_of(">a title<") + 10.0 <= y_of("1 points,"));
+}

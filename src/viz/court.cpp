@@ -11,7 +11,7 @@ namespace {
 
 constexpr double kPxPerFoot = 9.0;
 constexpr double kMargin = 34.0;
-constexpr double kTitleBand = 30.0;
+constexpr double kTitleBand = 42.0; // match svg stacks a title + subtitle line
 constexpr double kCourtW = 27.0 * kPxPerFoot; // singles width
 constexpr double kCourtH = 78.0 * kPxPerFoot; // baseline to baseline
 
@@ -272,9 +272,9 @@ std::string render_match_svg(const std::vector<tcl::ast::Point>& points, std::st
     << f(svg_h) << "' font-family='ui-monospace, Menlo, Consolas, monospace'>\n";
   s << "  <rect width='100%' height='100%' fill='#20242b'/>\n";
 
-  s << "  <text x='" << f(kMargin) << "' y='22' fill='#f4f4f4' font-size='12'>" << shown_title
+  s << "  <text x='" << f(kMargin) << "' y='18' fill='#f4f4f4' font-size='12'>" << shown_title
     << "</text>\n";
-  s << "  <text x='" << f(kMargin) << "' y='" << f(kMargin - 4) << "' fill='#9aa4b2'"
+  s << "  <text x='" << f(kMargin) << "' y='36' fill='#9aa4b2'"
     << " font-size='11'>" << points.size() << " points, " << winners << " winners, " << errors
     << " errors</text>\n";
 
