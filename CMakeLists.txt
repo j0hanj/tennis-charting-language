@@ -14,6 +14,7 @@ add_compile_options(-Wall -Wextra -Wpedantic)
 # --- core library (grows over time) --------------------------------------
 add_library(tcl_core STATIC
   src/scoring/score.cpp
+  src/scoring/check.cpp
   src/lexer/lexer.cpp
   src/lexer/render.cpp
   src/ast/ast.cpp

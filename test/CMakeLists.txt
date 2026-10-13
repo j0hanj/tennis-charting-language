@@ -19,6 +19,7 @@ add_executable(tcl_tests
   unit/ir_test.cpp
   unit/stats_test.cpp
   unit/report_test.cpp
+  unit/check_test.cpp
 )
 target_link_libraries(tcl_tests PRIVATE tcl_core Catch2::Catch2WithMain)
 
