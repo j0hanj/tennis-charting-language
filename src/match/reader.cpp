@@ -60,21 +60,6 @@ void sort_into_point_order(ReadResult& r) {
   r.matches_reordered = static_cast<int>(moved.size());
 }
 
-// Flag any match_id where the same Pt number shows up more than once (exact
-// duplicate lines are already dropped before this runs, so what's left here
-// are two genuinely different rows claiming to be the same point).
-void find_repeated_points(ReadResult& r) {
-  std::unordered_map<std::string, std::unordered_map<int, int>> seen;
-  std::unordered_set<std::string> flagged;
-  for (const auto& row : r.rows) {
-    if (row.pt <= 0) continue;
-    const int count = ++seen[row.match_id][row.pt];
-    if (count == 2 && flagged.insert(row.match_id).second) {
-      r.matches_with_repeated_points.push_back(row.match_id);
-    }
-  }
-}
-
 }  // namespace
 
 bool has_repeated_points(const std::vector<PointRow>& rows) {
@@ -84,6 +69,29 @@ bool has_repeated_points(const std::vector<PointRow>& rows) {
   }
   return false;
 }
+
+namespace {
+
+// Flag any match_id where the same Pt number shows up more than once (exact
+// duplicate lines are already dropped before this runs, so what's left here
+// are two genuinely different rows claiming to be the same point). Rows are
+// already grouped by match_id at this point (sort_into_point_order runs
+// first), so this is just has_repeated_points() run over each match's slice.
+void find_repeated_points(ReadResult& r) {
+  for (std::size_t i = 0; i < r.rows.size();) {
+    std::size_t end = i + 1;
+    while (end < r.rows.size() && r.rows[end].match_id == r.rows[i].match_id) ++end;
+
+    const std::vector<PointRow> match_rows(r.rows.begin() + static_cast<long>(i),
+                                           r.rows.begin() + static_cast<long>(end));
+    if (has_repeated_points(match_rows)) {
+      r.matches_with_repeated_points.push_back(r.rows[i].match_id);
+    }
+    i = end;
+  }
+}
+
+}  // namespace
 
 ReadResult read_points_csv(std::istream& in) {
   ReadResult out;
