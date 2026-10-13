@@ -77,6 +77,14 @@ void find_repeated_points(ReadResult& r) {
 
 }  // namespace
 
+bool has_repeated_points(const std::vector<PointRow>& rows) {
+  std::unordered_set<int> seen;
+  for (const auto& row : rows) {
+    if (row.pt > 0 && !seen.insert(row.pt).second) return true;
+  }
+  return false;
+}
+
 ReadResult read_points_csv(std::istream& in) {
   ReadResult out;
 

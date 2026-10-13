@@ -77,6 +77,12 @@ std::string render_match_report(const std::vector<tcl::match::PointRow>& rows) {
   std::string body;
   body += "<h1>" + html_escape(title) + "</h1>\n";
   body += "<div>" + html_escape(stats.match_id) + "</div>\n";
+  if (tcl::match::has_repeated_points(rows)) {
+    body += "<p style=\"color:#e5484d\">a point number repeats in this file - looks "
+            "like it got charted twice under one match_id. everything below is "
+            "computed from the rows in file order anyway, so take it with that "
+            "in mind.</p>\n";
+  }
   body += summary_section(stats);
   body += shot_chart_section(rows);
   body += timeline_section(rows);

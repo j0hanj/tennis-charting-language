@@ -54,6 +54,11 @@ struct ReadResult {
 // point for the rest of the match.
 ReadResult read_points_csv(std::istream& in);
 
+// Whether any Pt number shows up more than once in `rows`. Meant for rows
+// already narrowed to one match (read_points_csv's matches_with_repeated_points
+// does the equivalent check across a whole file, grouped by match_id).
+bool has_repeated_points(const std::vector<PointRow>& rows);
+
 }  // namespace tcl::match
 
 #endif  // TCL_MATCH_READER_HPP

@@ -75,3 +75,11 @@ TEST_CASE("each point gets a collapsible court diagram", "[report]") {
   for (size_t at = html.find("<svg"); at != std::string::npos; at = html.find("<svg", at + 1)) ++svgs;
   CHECK(svgs == 3);
 }
+
+TEST_CASE("the report warns when a point number repeats", "[report]") {
+  const std::vector<PointRow> clean{row(1, "4*", "", 1, 1), row(2, "6f2b*", "", 2, 2)};
+  CHECK(render_match_report(clean).find("charted twice") == std::string::npos);
+
+  const std::vector<PointRow> repeated{row(1, "4*", "", 1, 1), row(1, "6*", "", 2, 2)};
+  CHECK(render_match_report(repeated).find("charted twice") != std::string::npos);
+}
