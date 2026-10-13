@@ -67,9 +67,16 @@ bool validate(const Score& s, const MatchFormat& fmt, std::vector<std::string>& 
   // right at the breaker threshold, points follow different (higher) rules
   // this checker doesn't know about - see the header comment - so the normal
   // "game score already past the win condition" check is skipped there
-  // rather than risk a false positive.
-  const bool maybe_in_breaker = fmt.has_tiebreak && s.games[0] == fmt.games_for_tiebreak &&
-                                s.games[1] == fmt.games_for_tiebreak;
+  // rather than risk a false positive. a team-event decider (the whole set is
+  // a breaker from 0-0, games never move) needs the same exemption the whole
+  // time it's in the final set, not just at a games threshold - missing this
+  // the first time round flagged every single point of a clean match_tiebreak
+  // decider match as "impossible".
+  const bool in_final_set = s.sets[0] == fmt.sets_to_win - 1 && s.sets[1] == fmt.sets_to_win - 1;
+  const bool maybe_in_breaker =
+      (fmt.has_tiebreak && s.games[0] == fmt.games_for_tiebreak &&
+       s.games[1] == fmt.games_for_tiebreak) ||
+      (fmt.final_set_is_breaker_only && in_final_set);
   if (!maybe_in_breaker && (game_score_already_over(s.points[0], s.points[1], fmt) ||
                             game_score_already_over(s.points[1], s.points[0], fmt))) {
     fail("game score already past the win condition, should've reset");
@@ -121,7 +128,10 @@ CheckResult check_format(const MatchFormat& fmt) {
     ++out.states_explored;
 
     if (!validate(s, fmt, out.violations)) out.all_valid = false;
-    if (s.finished) continue; // no outgoing transitions from a finished match
+    if (s.finished) {
+      out.reaches_finish = true;
+      continue; // no outgoing transitions from a finished match
+    }
 
     for (const Player p : {Player::kOne, Player::kTwo}) {
       const Score next = step(s, p, fmt);

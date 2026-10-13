@@ -32,3 +32,22 @@ TEST_CASE("the search actually hits its bound on a no-tiebreak format", "[check]
   const auto r = check_format(MatchFormat::best_of_three_advantage_set());
   CHECK(r.states_bounded > 0);
 }
+
+TEST_CASE("the search actually reaches a finished state", "[check]") {
+  const auto r = check_format(MatchFormat::best_of_three_with_tiebreak());
+  CHECK(r.reaches_finish);
+  CHECK(r.ok());
+}
+
+TEST_CASE("every format on the menu reaches a finished state within the bound", "[check]") {
+  for (const auto& fmt : {MatchFormat::best_of_three_advantage_set(),
+                          MatchFormat::best_of_three_with_tiebreak(),
+                          MatchFormat::best_of_five_with_tiebreak(),
+                          MatchFormat::best_of_three_with_final_set_breaker(),
+                          MatchFormat::best_of_five_with_final_set_breaker(),
+                          MatchFormat::best_of_three_with_match_tiebreak_decider(),
+                          MatchFormat::nextgen_finals()}) {
+    const auto r = check_format(fmt);
+    CHECK(r.ok());
+  }
+}
