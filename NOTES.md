@@ -380,6 +380,23 @@ not something my code is getting wrong - a correct replay mechanically
 produces the contradiction. leaving this one flagged instead of guessing
 which point to flip just to make the number go to 100%.
 
+## day 20
+went back to the double-charted matches from day 17. didn't try to untangle
+them (still think that's the wrong move - guessing which copy is "real" is
+worse than leaving it broken) but added detection: `find_repeated_points()`
+counts Pt numbers per match_id after the exact-duplicate pass, and flags any
+match where the same point number shows up twice with different content.
+`tcl points` and `tcl lint` print a line for it now instead of just dumping
+a wall of score mismatches with no explanation.
+
+ran it on the whole 2020s file: flags exactly dubai and canada masters, the
+two i already knew about, nothing else. good, clean signal - no false
+positives across 3,337 matches. lint also fails on a flagged match now,
+same as any other real problem.
+
+numbers didn't move (3,334/3,337, 99% - this is diagnosis, not a fix) but
+anyone running lint on one of these two matches now gets told why, instead
+of a dozen confusing mismatches with no explanation.
+
 ## next
 - `;` and `!` - still need an actual charter to explain these
-- the double-charted matches (dubai, canada masters) from day 17

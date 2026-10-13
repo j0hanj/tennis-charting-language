@@ -132,6 +132,11 @@ points - checked, the rest look like genuine charting noise (a couple even
 have a note from the charter saying they couldn't see the point clearly),
 not a bug on this end.
 
+the csv reader also flags matches where a point number repeats - the file
+charting the same match twice under one match_id, which happened twice in
+the whole dataset. doesn't try to fix it, just tells you (`tcl points` /
+`tcl lint`) instead of showing a wall of unexplained mismatches.
+
 ## build
 
 need cmake + a c++20 compiler. catch2 gets pulled in for tests.
