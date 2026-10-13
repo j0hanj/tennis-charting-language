@@ -81,6 +81,27 @@ bool validate(const Score& s, const MatchFormat& fmt, std::vector<std::string>& 
   return ok;
 }
 
+// No transition should ever decrease a count except by resetting it to
+// exactly 0 - that covers a game/set/match being won in one check, without
+// needing to know which kind of win it was.
+bool transition_ok(const Score& a, const Score& b, std::vector<std::string>& violations) {
+  bool ok = true;
+  auto fail = [&](const char* why) {
+    ok = false;
+    if (violations.size() < 8) violations.emplace_back(why);
+  };
+  for (int i : {0, 1}) {
+    if (b.sets[i] < a.sets[i]) fail("a transition decreased a set count");
+    if (b.games[i] < a.games[i] && b.games[i] != 0) {
+      fail("a transition decreased a game count without resetting to 0");
+    }
+    if (b.points[i] < a.points[i] && b.points[i] != 0) {
+      fail("a transition decreased a point count without resetting to 0");
+    }
+  }
+  return ok;
+}
+
 }  // namespace
 
 CheckResult check_format(const MatchFormat& fmt) {
@@ -104,6 +125,7 @@ CheckResult check_format(const MatchFormat& fmt) {
 
     for (const Player p : {Player::kOne, Player::kTwo}) {
       const Score next = step(s, p, fmt);
+      if (!transition_ok(s, next, out.violations)) out.monotonic = false;
       if (next.points[0] > pcap || next.points[1] > pcap || next.games[0] > gcap ||
           next.games[1] > gcap) {
         ++out.states_bounded;

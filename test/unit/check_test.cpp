@@ -7,15 +7,23 @@ using tcl::scoring::MatchFormat;
 
 TEST_CASE("a plain advantage-set best of three has no violations", "[check]") {
   const auto r = check_format(MatchFormat::best_of_three_advantage_set());
-  CHECK(r.all_valid);
+  CHECK(r.ok());
   CHECK(r.violations.empty());
   CHECK(r.states_explored > 0);
 }
 
 TEST_CASE("a tiebreak format has no violations", "[check]") {
   const auto r = check_format(MatchFormat::best_of_three_with_tiebreak());
-  CHECK(r.all_valid);
+  CHECK(r.ok());
   CHECK(r.violations.empty());
+}
+
+TEST_CASE("nothing ever decreases except by resetting to 0", "[check]") {
+  // every count climbs, resets, or stays put across the whole reachable
+  // space - this is really just re-stating .ok(), but says what it's
+  // actually testing for
+  const auto r = check_format(MatchFormat::best_of_three_with_tiebreak());
+  CHECK(r.monotonic);
 }
 
 TEST_CASE("the search actually hits its bound on a no-tiebreak format", "[check]") {
