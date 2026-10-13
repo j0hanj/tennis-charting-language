@@ -136,3 +136,35 @@ TEST_CASE("two rows that just happen to match aren't dropped unless adjacent", "
   CHECK(r.rows.size() == 3);
   CHECK(r.duplicate_rows_dropped == 0);
 }
+
+TEST_CASE("a repeated point number flags the match once", "[match]") {
+  std::istringstream in(
+      "match_id,Pt,1st\n"
+      "m,1,4*\n"
+      "m,2,4w\n"
+      "m,2,6*\n"  // same Pt as above, different content - not an exact dup
+      "m,3,6*\n");
+  const auto r = read_points_csv(in);
+  CHECK(r.rows.size() == 4);          // nothing dropped, just flagged
+  CHECK(r.duplicate_rows_dropped == 0);
+  REQUIRE(r.matches_with_repeated_points.size() == 1);
+  CHECK(r.matches_with_repeated_points[0] == "m");
+}
+
+TEST_CASE("a clean file flags nothing", "[match]") {
+  std::istringstream in("match_id,Pt,1st\nm,1,4*\nm,2,4w\nm,3,6*\n");
+  const auto r = read_points_csv(in);
+  CHECK(r.matches_with_repeated_points.empty());
+}
+
+TEST_CASE("each affected match is only flagged once, even with several repeats", "[match]") {
+  std::istringstream in(
+      "match_id,Pt,1st\n"
+      "m,1,4*\n"
+      "m,1,6*\n"
+      "m,2,4w\n"
+      "m,2,6w\n");
+  const auto r = read_points_csv(in);
+  REQUIRE(r.matches_with_repeated_points.size() == 1);
+  CHECK(r.matches_with_repeated_points[0] == "m");
+}

@@ -29,6 +29,11 @@ struct ReadResult {
   std::vector<std::string> errors; // a bad row is noted, not fatal
   int matches_reordered = 0; // how many matches had rows out of order in the file
   int duplicate_rows_dropped = 0; // exact repeats of the line right before them
+  // match_ids where the same Pt number shows up more than once and the rows
+  // aren't exact duplicates of each other - seen in the wild as a match
+  // charted twice in full under one match_id, by two different people or in
+  // two sessions. nothing here tries to untangle that, it's just flagged.
+  std::vector<std::string> matches_with_repeated_points;
 };
 
 // Reads a Match Charting Project "-points" csv. Expected header:

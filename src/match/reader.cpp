@@ -5,6 +5,7 @@
 #include <optional>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 
 #include "match/csv.hpp"
 
@@ -57,6 +58,21 @@ void sort_into_point_order(ReadResult& r) {
   }
   r.rows = std::move(sorted);
   r.matches_reordered = static_cast<int>(moved.size());
+}
+
+// Flag any match_id where the same Pt number shows up more than once (exact
+// duplicate lines are already dropped before this runs, so what's left here
+// are two genuinely different rows claiming to be the same point).
+void find_repeated_points(ReadResult& r) {
+  std::unordered_map<std::string, std::unordered_map<int, int>> seen;
+  std::unordered_set<std::string> flagged;
+  for (const auto& row : r.rows) {
+    if (row.pt <= 0) continue;
+    const int count = ++seen[row.match_id][row.pt];
+    if (count == 2 && flagged.insert(row.match_id).second) {
+      r.matches_with_repeated_points.push_back(row.match_id);
+    }
+  }
 }
 
 }  // namespace
@@ -130,6 +146,7 @@ ReadResult read_points_csv(std::istream& in) {
   }
 
   sort_into_point_order(out);
+  find_repeated_points(out);
   return out;
 }
 
