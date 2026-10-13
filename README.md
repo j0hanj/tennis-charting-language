@@ -53,7 +53,9 @@ pretty bare. what's there:
   the score. needed because the shorthand only records who won each point, not
   the score, so to check a match you replay it and see if the final score lines
   up. points, deuce, games, sets, best of 3 and 5, tiebreak with the serve
-  rotation
+  rotation. `tcl modelcheck` BFS's every state it can reach under every format
+  and checks none are impossible - caught a real bug the first time it ran
+  (see notes, day 21)
 - lexer (`src/lexer/`) - turns a charting string into tokens, flags characters
   it doesn't know and keeps going
 - parser (`src/parser/`, `src/ast/`) - hand-written recursive descent, tokens ->
@@ -105,7 +107,7 @@ pretty bare. what's there:
 - [x] scoring: short sets / no-ad (nextgen finals)
 - [x] scoring: final-set match-tiebreak (wimbledon / AO style, first to 10)
 - [x] scoring: team-event decider (the breaker from 0-0, no set played first)
-- [ ] scoring: walk every reachable score, make sure none are impossible
+- [x] scoring: walk every reachable score, make sure none are impossible
 - [ ] write out the notation grammar properly
 - [x] tokenizer
 - [x] parser -> tree for one point

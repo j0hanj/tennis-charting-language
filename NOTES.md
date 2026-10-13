@@ -398,5 +398,36 @@ numbers didn't move (3,334/3,337, 99% - this is diagnosis, not a fix) but
 anyone running lint on one of these two matches now gets told why, instead
 of a dozen confusing mismatches with no explanation.
 
+## day 21
+the model checker. this is from the readme's todo since literally day 2 -
+"walk every reachable score, make sure none are impossible" - and i finally
+sat down and built it.
+
+`src/scoring/check.cpp` does a BFS from 0-0 over every state step() can reach
+under a format. raw points can climb forever through an unbroken string of
+deuces in a no-tiebreak format, so an unbounded search never finishes -
+bounded it at 4 past whatever the winning target is, which is enough to see
+a game won outright, from deuce, and from deuce after trading the advantage
+back once (as far as the rules actually differ). checks three things: no
+state is structurally impossible (a finished match where the loser also hit
+sets_to_win, a set score standing somewhere it should've already reset from,
+that kind of thing), no transition ever decreases a count except by
+resetting it to exactly 0, and the search actually reaches a finished state
+at all (if it didn't, something would be stuck).
+
+ran it against every real format and it immediately found something: the
+team-event decider (the whole deciding set is a breaker from 0-0, games
+never move) failed every single point. the validity check's "are we
+possibly in a breaker" logic only knew about the normal 6-6 tiebreak
+trigger, so a clean 6-point breaker score looked like a game that should've
+already ended. real bug, caught on the first run, not something i'd have
+found by hand-testing since the scoring_test.cpp tests for that format
+never happened to hit a breaker score past the normal game range. fixed the
+check to also cover "we're in the final set and the whole thing's a
+breaker".
+
+new `tcl modelcheck` runs it over all 7 formats and prints states explored /
+bounded / pass-fail for each. all 7 pass now.
+
 ## next
 - `;` and `!` - still need an actual charter to explain these
