@@ -11,6 +11,7 @@
 #include <iostream>
 #include <string>
 #include <string_view>
+#include <utility>
 #include <vector>
 
 #include "analytics/stats.hpp"
@@ -20,6 +21,7 @@
 #include "match/reader.hpp"
 #include "parser/parser.hpp"
 #include "report/report.hpp"
+#include "scoring/check.hpp"
 #include "scoring/score.hpp"
 #include "sema/outcomes.hpp"
 #include "sema/reconcile.hpp"
@@ -51,6 +53,9 @@ int print_usage(std::ostream& os) {
         "                           flatten to one csv row per shot\n"
         "  report <file.csv> <out-dir>\n"
         "                           one html page per match, self-contained\n"
+        "  modelcheck               bfs every state the scoring engine can reach,\n"
+        "                           under every format it knows, check none of\n"
+        "                           them are impossible\n"
         "  --version, -v            print version\n"
         "  --help, -h               this message\n"
         "\n";
@@ -180,6 +185,32 @@ int run_stats(int argc, char** argv) {
     std::cout << tcl::analytics::format_report(tcl::analytics::compute_stats(matches[i]));
   }
   return 0;
+}
+
+int run_modelcheck(int /*argc*/, char** /*argv*/) {
+  using tcl::scoring::check_format;
+  using tcl::scoring::MatchFormat;
+
+  const std::vector<std::pair<std::string, MatchFormat>> formats{
+      {"best of 3, advantage set", MatchFormat::best_of_three_advantage_set()},
+      {"best of 3, tiebreak", MatchFormat::best_of_three_with_tiebreak()},
+      {"best of 5, tiebreak", MatchFormat::best_of_five_with_tiebreak()},
+      {"best of 3, final-set breaker", MatchFormat::best_of_three_with_final_set_breaker()},
+      {"best of 5, final-set breaker", MatchFormat::best_of_five_with_final_set_breaker()},
+      {"team-event match-tiebreak decider",
+       MatchFormat::best_of_three_with_match_tiebreak_decider()},
+      {"nextgen finals", MatchFormat::nextgen_finals()},
+  };
+
+  bool all_ok = true;
+  for (const auto& [name, fmt] : formats) {
+    const auto r = check_format(fmt);
+    all_ok = all_ok && r.ok();
+    std::cout << (r.ok() ? "ok   " : "FAIL ") << name << "  (" << r.states_explored
+              << " states, " << r.states_bounded << " bounded out)\n";
+    for (const auto& v : r.violations) std::cerr << "       " << v << '\n';
+  }
+  return all_ok ? 0 : 1;
 }
 
 int run_report(int argc, char** argv) {
@@ -494,6 +525,9 @@ int main(int argc, char** argv) {
   }
   if (cmd == "stats") {
     return run_stats(argc, argv);
+  }
+  if (cmd == "modelcheck") {
+    return run_modelcheck(argc, argv);
   }
   if (cmd == "report") {
     return run_report(argc, argv);
