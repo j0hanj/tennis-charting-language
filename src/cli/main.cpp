@@ -57,6 +57,14 @@ int print_usage(std::ostream& os) {
   return 0;
 }
 
+void warn_repeated_points(const tcl::match::ReadResult& result) {
+  for (const auto& match_id : result.matches_with_repeated_points) {
+    std::cerr << "  " << match_id
+              << ": a point number repeats - looks like this match got charted"
+                 " twice under one match_id, not attempting to untangle it\n";
+  }
+}
+
 int run_points(int argc, char** argv) {
   if (argc < 3) {
     std::cerr << "points: give me a csv file, e.g. tcl points match.csv\n";
@@ -73,6 +81,7 @@ int run_points(int argc, char** argv) {
   for (const auto& e : result.errors) {
     std::cerr << "  " << e << '\n';
   }
+  warn_repeated_points(result);
 
   int parsed = 0;
   int with_problems = 0;
@@ -105,6 +114,7 @@ int run_lint(int argc, char** argv) {
   for (const auto& e : result.errors) {
     std::cerr << "  " << e << '\n';
   }
+  warn_repeated_points(result);
 
   int parse_problems = 0;
   for (const auto& row : result.rows) {
@@ -139,7 +149,10 @@ int run_lint(int argc, char** argv) {
             << rec.points_checked << " scores checked, " << score_issues << " score issues, "
             << outcome_issues.size() << " outcome disagreements\n";
 
-  return (parse_problems == 0 && rec.issues.empty() && result.errors.empty()) ? 0 : 1;
+  return (parse_problems == 0 && rec.issues.empty() && result.errors.empty() &&
+          result.matches_with_repeated_points.empty())
+             ? 0
+             : 1;
 }
 
 int run_stats(int argc, char** argv) {
